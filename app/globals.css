@@ -1,0 +1,26 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sora: "Sora", sans-serif;
+
+  --color-primary: #10B981;
+  --color-secondary: #0D9488;
+  --color-surface-dark: #111814;
+  --color-surface-light: #FFFFFF;
+  --color-background-dark: #0A0F0D;
+  --color-background-light: #F0FDF4;
+}
+
+@layer base {
+  body {
+    @apply bg-background-dark text-emerald-50;
+  }
+
+  .dark body {
+    @apply bg-background-dark text-emerald-50;
+  }
+
+  .light body {
+    @apply bg-background-light text-[#0A0F0D];
+  }
+}

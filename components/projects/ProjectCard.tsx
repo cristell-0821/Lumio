@@ -1,0 +1,71 @@
+'use client'
+
+import { Project } from '@/types'
+import { Trash2, Users, Calendar, ChevronRight } from 'lucide-react'
+
+interface Props {
+  project: Project
+  onClick: () => void
+  onDelete: (id: string) => void
+}
+
+export default function ProjectCard({ project, onClick, onDelete }: Props) {
+  const total = project.tasks.length
+  const completed = project.tasks.filter(t => t.completed).length
+  const progress = total === 0 ? 0 : Math.round((completed / total) * 100)
+
+  return (
+    <div className="p-5 rounded-2xl bg-[#111814] border border-emerald-900/30
+      hover:border-emerald-500/30 transition-all duration-200 group">
+
+      {/* Header */}
+      <div className="flex items-start justify-between mb-3">
+        <div className="flex-1">
+          <h4 className="text-emerald-100 font-semibold">{project.title}</h4>
+          <p className="text-emerald-700 text-xs mt-0.5 line-clamp-2">{project.description}</p>
+        </div>
+        <button
+          onClick={(e) => { e.stopPropagation(); onDelete(project.id) }}
+          className="text-emerald-800 hover:text-red-400 transition-colors ml-2 shrink-0"
+        >
+          <Trash2 size={15} />
+        </button>
+      </div>
+
+      {/* Progress */}
+      <div className="mb-4">
+        <div className="flex justify-between text-xs text-emerald-600 mb-1.5">
+          <span>{completed}/{total} tareas</span>
+          <span>{progress}%</span>
+        </div>
+        <div className="h-1.5 rounded-full bg-emerald-900/40">
+          <div
+            className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 transition-all duration-500"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
+      </div>
+
+      {/* Footer */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <span className="flex items-center gap-1 text-xs text-emerald-700">
+            <Users size={12} />
+            {project.members.length} miembros
+          </span>
+          <span className="flex items-center gap-1 text-xs text-emerald-700">
+            <Calendar size={12} />
+            {project.deadline}
+          </span>
+        </div>
+        <button
+          onClick={onClick}
+          className="flex items-center gap-1 text-xs text-emerald-500
+            hover:text-emerald-300 transition-colors font-medium"
+        >
+          Ver <ChevronRight size={13} />
+        </button>
+      </div>
+    </div>
+  )
+}
