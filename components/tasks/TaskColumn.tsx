@@ -32,10 +32,15 @@ export default function TaskColumn({ status, tasks, onDelete }: Props) {
   const style = columnStyles[status]
 
   return (
-    <div className={`flex flex-col rounded-2xl border ${style.border} bg-[#0d1210] p-4 min-h-[500px]`}>
+    <div
+      className={`flex flex-col rounded-2xl border ${style.border} p-4 min-h-[500px]`}
+      style={{ backgroundColor: 'var(--bg-surface)' }}
+    >
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-emerald-100 font-semibold text-sm">{style.label}</h3>
+        <h3 style={{ color: 'var(--text-primary)' }} className="font-semibold text-sm">
+          {style.label}
+        </h3>
         <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${style.badge}`}>
           {tasks.length}
         </span>
@@ -62,7 +67,9 @@ export default function TaskColumn({ status, tasks, onDelete }: Props) {
 
             {tasks.length === 0 && !snapshot.isDraggingOver && (
               <div className="flex-1 flex items-center justify-center">
-                <p className="text-emerald-800 text-xs">Sin tareas aquí</p>
+                <p style={{ color: 'var(--text-secondary)' }} className="text-xs">
+                  Sin tareas aquí
+                </p>
               </div>
             )}
           </div>

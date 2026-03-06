@@ -25,12 +25,14 @@ export default function FlashCard({ card }: Props) {
       >
         {/* Front */}
         <div
-          className="absolute inset-0 rounded-2xl border border-emerald-900/30
+          className="absolute inset-0 rounded-2xl border border-emerald-500/30
             bg-gradient-to-br from-emerald-500/10 to-teal-500/10
             flex items-center justify-center p-6"
           style={{ backfaceVisibility: 'hidden' }}
         >
-          <p className="text-emerald-100 text-center font-medium">{card.question}</p>
+          <p style={{ color: 'var(--text-primary)' }} className="text-center font-medium">
+            {card.question}
+          </p>
         </div>
 
         {/* Back */}
@@ -43,7 +45,9 @@ export default function FlashCard({ card }: Props) {
             transform: 'rotateY(180deg)',
           }}
         >
-          <p className="text-teal-100 text-center text-sm leading-relaxed">{card.answer}</p>
+          <p style={{ color: 'var(--text-primary)' }} className="text-center text-sm leading-relaxed">
+            {card.answer}
+          </p>
         </div>
       </div>
     </div>

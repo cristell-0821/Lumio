@@ -6,6 +6,9 @@ import { Task, TaskStatus, Priority } from '@/types'
 import { taskStorage } from '@/lib/storage'
 import TaskColumn from '@/components/tasks/TaskColumn'
 import { Plus, X } from 'lucide-react'
+import PageTransition from '@/components/ui/PageTransition'
+import Toast from '@/components/ui/Toast'
+import { useToast } from '@/lib/useToast'
 
 const COLUMNS: TaskStatus[] = ['pendiente', 'en-progreso', 'listo']
 
@@ -18,6 +21,7 @@ export default function TasksPage() {
     deadline: '',
     priority: 'media' as Priority,
   })
+  const { toast, showToast, hideToast } = useToast()
 
   useEffect(() => {
     setTasks(taskStorage.getAll())
@@ -35,6 +39,7 @@ export default function TasksPage() {
     )
     setTasks(updated)
     taskStorage.save(updated)
+    showToast('¡Tarea creada exitosamente!')
   }
 
   const handleAdd = () => {
@@ -53,6 +58,7 @@ export default function TasksPage() {
     const updated = [...tasks, newTask]
     setTasks(updated)
     taskStorage.save(updated)
+    showToast('¡Tarea creada exitosamente!')
     setForm({ title: '', subject: '', deadline: '', priority: 'media' })
     setShowForm(false)
   }
@@ -61,15 +67,17 @@ export default function TasksPage() {
     const updated = tasks.filter(t => t.id !== id)
     setTasks(updated)
     taskStorage.save(updated)
+    showToast('Tarea eliminada.')
   }
 
   return (
+    <PageTransition>
     <div className="max-w-6xl mx-auto">
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h2 className="text-3xl font-bold text-emerald-50">Tareas</h2>
-          <p className="text-emerald-600 mt-1">Organiza tu carga académica</p>
+          <h2 style={{ color: 'var(--text-primary)' }} className="text-3xl font-bold">Tareas</h2>
+          <p style={{ color: 'var(--text-secondary)' }} className="mt-1">Organiza tu carga académica</p>
         </div>
         <button
           onClick={() => setShowForm(!showForm)}
@@ -84,9 +92,10 @@ export default function TasksPage() {
 
       {/* Form */}
       {showForm && (
-        <div className="mb-8 p-6 rounded-2xl bg-[#111814] border border-emerald-900/30">
+        <div className="mb-8 p-6 rounded-2xl border border-emerald-900/30"
+          style={{ backgroundColor: 'var(--bg-surface)' }}>
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-emerald-100 font-semibold">Nueva tarea</h3>
+            <h3 style={{ color: 'var(--text-primary)' }} className="font-semibold">Nueva tarea</h3>
             <button onClick={() => setShowForm(false)} className="text-emerald-700 hover:text-emerald-400">
               <X size={18} />
             </button>
@@ -96,30 +105,44 @@ export default function TasksPage() {
               placeholder="Título de la tarea"
               value={form.title}
               onChange={e => setForm({ ...form, title: e.target.value })}
-              className="px-4 py-2.5 rounded-xl bg-[#0A0F0D] border border-emerald-900/30
-                text-emerald-100 placeholder-emerald-800 text-sm
-                focus:outline-none focus:border-emerald-500/50"
+              className="px-4 py-2.5 rounded-xl border border-emerald-900/30
+                text-sm focus:outline-none focus:border-emerald-500/50"
+              style={{
+                backgroundColor: 'var(--bg-main)',
+                color: 'var(--text-primary)',
+              }}
             />
             <input
               placeholder="Materia"
               value={form.subject}
               onChange={e => setForm({ ...form, subject: e.target.value })}
-              className="px-4 py-2.5 rounded-xl bg-[#0A0F0D] border border-emerald-900/30
-                text-emerald-100 placeholder-emerald-800 text-sm
-                focus:outline-none focus:border-emerald-500/50"
+              className="px-4 py-2.5 rounded-xl border border-emerald-900/30
+                text-sm focus:outline-none focus:border-emerald-500/50"
+              style={{
+                backgroundColor: 'var(--bg-main)',
+                color: 'var(--text-primary)',
+              }}
             />
             <input
               type="date"
               value={form.deadline}
               onChange={e => setForm({ ...form, deadline: e.target.value })}
-              className="px-4 py-2.5 rounded-xl bg-[#0A0F0D] border border-emerald-900/30
-                text-emerald-100 text-sm focus:outline-none focus:border-emerald-500/50"
+              className="px-4 py-2.5 rounded-xl border border-emerald-900/30
+                text-sm focus:outline-none focus:border-emerald-500/50"
+              style={{
+                backgroundColor: 'var(--bg-main)',
+                color: 'var(--text-primary)',
+              }}
             />
             <select
               value={form.priority}
               onChange={e => setForm({ ...form, priority: e.target.value as Priority })}
-              className="px-4 py-2.5 rounded-xl bg-[#0A0F0D] border border-emerald-900/30
-                text-emerald-100 text-sm focus:outline-none focus:border-emerald-500/50"
+              className="px-4 py-2.5 rounded-xl border border-emerald-900/30
+                text-sm focus:outline-none focus:border-emerald-500/50"
+              style={{
+                backgroundColor: 'var(--bg-main)',
+                color: 'var(--text-primary)',
+              }}
             >
               <option value="alta">Alta prioridad</option>
               <option value="media">Media prioridad</option>
@@ -135,7 +158,6 @@ export default function TasksPage() {
           </button>
         </div>
       )}
-
       {/* Kanban */}
       <DragDropContext onDragEnd={handleDragEnd}>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -150,5 +172,7 @@ export default function TasksPage() {
         </div>
       </DragDropContext>
     </div>
+    <Toast message={toast.message} isVisible={toast.visible} onClose={hideToast} />
+    </PageTransition>
   )
 }

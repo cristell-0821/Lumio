@@ -50,8 +50,12 @@ export default function FlashcardGenerator({ onGenerated }: Props) {
   }
 
   return (
-    <div className="p-6 rounded-2xl bg-[#111814] border border-emerald-900/30">
-      <h3 className="text-emerald-100 font-semibold mb-4">Generar con IA</h3>
+    <div className="p-6 rounded-2xl border border-emerald-900/30"
+      style={{ backgroundColor: 'var(--bg-surface)' }}>
+
+      <h3 style={{ color: 'var(--text-primary)' }} className="font-semibold mb-4">
+        Generar con IA
+      </h3>
 
       {/* Mode toggle */}
       <div className="flex gap-2 mb-4">
@@ -76,9 +80,12 @@ export default function FlashcardGenerator({ onGenerated }: Props) {
           placeholder="Ej: Derivadas, Segunda Guerra Mundial, Fotosíntesis..."
           value={input}
           onChange={e => setInput(e.target.value)}
-          className="w-full px-4 py-2.5 rounded-xl bg-[#0A0F0D] border border-emerald-900/30
-            text-emerald-100 placeholder-emerald-800 text-sm mb-4
-            focus:outline-none focus:border-emerald-500/50"
+          className="w-full px-4 py-2.5 rounded-xl border border-emerald-900/30
+            text-sm mb-4 focus:outline-none focus:border-emerald-500/50"
+          style={{
+            backgroundColor: 'var(--bg-main)',
+            color: 'var(--text-primary)',
+          }}
         />
       ) : (
         <textarea
@@ -86,9 +93,12 @@ export default function FlashcardGenerator({ onGenerated }: Props) {
           value={input}
           onChange={e => setInput(e.target.value)}
           rows={5}
-          className="w-full px-4 py-2.5 rounded-xl bg-[#0A0F0D] border border-emerald-900/30
-            text-emerald-100 placeholder-emerald-800 text-sm mb-4 resize-none
-            focus:outline-none focus:border-emerald-500/50"
+          className="w-full px-4 py-2.5 rounded-xl border border-emerald-900/30
+            text-sm mb-4 resize-none focus:outline-none focus:border-emerald-500/50"
+          style={{
+            backgroundColor: 'var(--bg-main)',
+            color: 'var(--text-primary)',
+          }}
         />
       )}
 

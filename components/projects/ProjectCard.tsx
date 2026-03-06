@@ -2,6 +2,8 @@
 
 import { Project } from '@/types'
 import { Trash2, Users, Calendar, ChevronRight } from 'lucide-react'
+import { useState } from 'react'
+import ConfirmModal from '@/components/ui/ConfirmModal'
 
 interface Props {
   project: Project
@@ -13,19 +15,25 @@ export default function ProjectCard({ project, onClick, onDelete }: Props) {
   const total = project.tasks.length
   const completed = project.tasks.filter(t => t.completed).length
   const progress = total === 0 ? 0 : Math.round((completed / total) * 100)
+  const [showConfirm, setShowConfirm] = useState(false)
 
   return (
-    <div className="p-5 rounded-2xl bg-[#111814] border border-emerald-900/30
-      hover:border-emerald-500/30 transition-all duration-200 group">
-
+    <div
+      className="p-5 rounded-2xl border border-emerald-900/30 hover:border-emerald-500/30 transition-all duration-200 group"
+      style={{ backgroundColor: 'var(--bg-surface)' }}
+    >
       {/* Header */}
       <div className="flex items-start justify-between mb-3">
         <div className="flex-1">
-          <h4 className="text-emerald-100 font-semibold">{project.title}</h4>
-          <p className="text-emerald-700 text-xs mt-0.5 line-clamp-2">{project.description}</p>
+          <h4 style={{ color: 'var(--text-primary)' }} className="font-semibold">
+            {project.title}
+          </h4>
+          <p style={{ color: 'var(--text-secondary)' }} className="text-xs mt-0.5 line-clamp-2">
+            {project.description}
+          </p>
         </div>
         <button
-          onClick={(e) => { e.stopPropagation(); onDelete(project.id) }}
+          onClick={(e) => { e.stopPropagation(); setShowConfirm(true) }}
           className="text-emerald-800 hover:text-red-400 transition-colors ml-2 shrink-0"
         >
           <Trash2 size={15} />
@@ -34,7 +42,8 @@ export default function ProjectCard({ project, onClick, onDelete }: Props) {
 
       {/* Progress */}
       <div className="mb-4">
-        <div className="flex justify-between text-xs text-emerald-600 mb-1.5">
+        <div className="flex justify-between text-xs mb-1.5"
+          style={{ color: 'var(--text-secondary)' }}>
           <span>{completed}/{total} tareas</span>
           <span>{progress}%</span>
         </div>
@@ -49,23 +58,29 @@ export default function ProjectCard({ project, onClick, onDelete }: Props) {
       {/* Footer */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <span className="flex items-center gap-1 text-xs text-emerald-700">
+          <span style={{ color: 'var(--text-secondary)' }} className="flex items-center gap-1 text-xs">
             <Users size={12} />
             {project.members.length} miembros
           </span>
-          <span className="flex items-center gap-1 text-xs text-emerald-700">
+          <span style={{ color: 'var(--text-secondary)' }} className="flex items-center gap-1 text-xs">
             <Calendar size={12} />
             {project.deadline}
           </span>
         </div>
         <button
           onClick={onClick}
-          className="flex items-center gap-1 text-xs text-emerald-500
-            hover:text-emerald-300 transition-colors font-medium"
+          className="flex items-center gap-1 text-xs text-emerald-500 hover:text-emerald-300 transition-colors font-medium"
         >
           Ver <ChevronRight size={13} />
         </button>
       </div>
+      <ConfirmModal
+        isOpen={showConfirm}
+        title="¿Eliminar proyecto?"
+        message={`"${project.title}" y todas sus tareas serán eliminados permanentemente.`}
+        onConfirm={() => { onDelete(project.id); setShowConfirm(false) }}
+        onCancel={() => setShowConfirm(false)}
+      />
     </div>
   )
 }

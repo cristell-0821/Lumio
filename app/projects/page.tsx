@@ -6,6 +6,9 @@ import { projectStorage } from '@/lib/storage'
 import ProjectCard from '@/components/projects/ProjectCard'
 import ProjectDetail from '@/components/projects/ProjectDetail'
 import { Plus, X } from 'lucide-react'
+import PageTransition from '@/components/ui/PageTransition'
+import Toast from '@/components/ui/Toast'
+import { useToast } from '@/lib/useToast'
 
 export default function ProjectsPage() {
   const [projects, setProjects] = useState<Project[]>([])
@@ -16,6 +19,7 @@ export default function ProjectsPage() {
     description: '',
     deadline: '',
   })
+  const { toast, showToast, hideToast } = useToast()
 
   useEffect(() => {
     setProjects(projectStorage.getAll())
@@ -23,7 +27,6 @@ export default function ProjectsPage() {
 
   const handleAdd = () => {
     if (!form.title.trim() || !form.deadline) return
-
     const newProject: Project = {
       id: crypto.randomUUID(),
       title: form.title,
@@ -33,11 +36,11 @@ export default function ProjectsPage() {
       tasks: [],
       createdAt: new Date().toISOString(),
     }
-
     projectStorage.add(newProject)
     setProjects(projectStorage.getAll())
     setForm({ title: '', description: '', deadline: '' })
     setShowForm(false)
+    showToast('¡Proyecto creado exitosamente!')
   }
 
   const handleUpdate = (updated: Project) => {
@@ -49,6 +52,7 @@ export default function ProjectsPage() {
   const handleDelete = (id: string) => {
     projectStorage.delete(id)
     setProjects(projectStorage.getAll())
+    showToast('Proyecto eliminado.')
   }
 
   if (activeProject) {
@@ -62,12 +66,17 @@ export default function ProjectsPage() {
   }
 
   return (
+    <PageTransition>
     <div className="max-w-4xl mx-auto">
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h2 className="text-3xl font-bold text-emerald-50">Proyectos</h2>
-          <p className="text-emerald-600 mt-1">Gestiona tus proyectos grupales</p>
+          <h2 style={{ color: 'var(--text-primary)' }} className="text-3xl font-bold">
+            Proyectos
+          </h2>
+          <p style={{ color: 'var(--text-secondary)' }} className="mt-1">
+            Gestiona tus proyectos grupales
+          </p>
         </div>
         <button
           onClick={() => setShowForm(!showForm)}
@@ -82,9 +91,12 @@ export default function ProjectsPage() {
 
       {/* Form */}
       {showForm && (
-        <div className="mb-8 p-6 rounded-2xl bg-[#111814] border border-emerald-900/30">
+        <div className="mb-8 p-6 rounded-2xl border border-emerald-900/30"
+          style={{ backgroundColor: 'var(--bg-surface)' }}>
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-emerald-100 font-semibold">Nuevo proyecto</h3>
+            <h3 style={{ color: 'var(--text-primary)' }} className="font-semibold">
+              Nuevo proyecto
+            </h3>
             <button onClick={() => setShowForm(false)} className="text-emerald-700 hover:text-emerald-400">
               <X size={18} />
             </button>
@@ -94,25 +106,26 @@ export default function ProjectsPage() {
               placeholder="Nombre del proyecto"
               value={form.title}
               onChange={e => setForm({ ...form, title: e.target.value })}
-              className="px-4 py-2.5 rounded-xl bg-[#0A0F0D] border border-emerald-900/30
-                text-emerald-100 placeholder-emerald-800 text-sm
-                focus:outline-none focus:border-emerald-500/50"
+              className="px-4 py-2.5 rounded-xl border border-emerald-900/30
+                text-sm focus:outline-none focus:border-emerald-500/50"
+              style={{ backgroundColor: 'var(--bg-main)', color: 'var(--text-primary)' }}
             />
             <input
               type="date"
               value={form.deadline}
               onChange={e => setForm({ ...form, deadline: e.target.value })}
-              className="px-4 py-2.5 rounded-xl bg-[#0A0F0D] border border-emerald-900/30
-                text-emerald-100 text-sm focus:outline-none focus:border-emerald-500/50"
+              className="px-4 py-2.5 rounded-xl border border-emerald-900/30
+                text-sm focus:outline-none focus:border-emerald-500/50"
+              style={{ backgroundColor: 'var(--bg-main)', color: 'var(--text-primary)' }}
             />
             <textarea
               placeholder="Descripción del proyecto"
               value={form.description}
               onChange={e => setForm({ ...form, description: e.target.value })}
               rows={3}
-              className="md:col-span-2 px-4 py-2.5 rounded-xl bg-[#0A0F0D] border border-emerald-900/30
-                text-emerald-100 placeholder-emerald-800 text-sm resize-none
-                focus:outline-none focus:border-emerald-500/50"
+              className="md:col-span-2 px-4 py-2.5 rounded-xl border border-emerald-900/30
+                text-sm resize-none focus:outline-none focus:border-emerald-500/50"
+              style={{ backgroundColor: 'var(--bg-main)', color: 'var(--text-primary)' }}
             />
           </div>
           <button
@@ -144,5 +157,6 @@ export default function ProjectsPage() {
         </div>
       )}
     </div>
+    </PageTransition>
   )
 }

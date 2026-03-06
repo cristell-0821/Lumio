@@ -2,25 +2,35 @@
 
 @theme {
   --font-sora: "Sora", sans-serif;
-
   --color-primary: #10B981;
   --color-secondary: #0D9488;
-  --color-surface-dark: #111814;
-  --color-surface-light: #FFFFFF;
-  --color-background-dark: #0A0F0D;
-  --color-background-light: #F0FDF4;
+}
+
+:root {
+  --text-primary: #0A0F0D;
+  --text-secondary: #065f46;
+  --bg-main: #F0FDF4;
+  --bg-surface: #FFFFFF;
+  --border-color: #D1FAE5;
+}
+
+.dark {
+  --text-primary: #E2FDF4;
+  --text-secondary: #6ee7b7;
+  --bg-main: #0A0F0D;
+  --bg-surface: #111814;
+  --border-color: #064e3b;
 }
 
 @layer base {
   body {
-    @apply bg-background-dark text-emerald-50;
+    background-color: var(--bg-main);
+    color: var(--text-primary);
+    transition: background-color 0.3s, color 0.3s;
   }
 
-  .dark body {
-    @apply bg-background-dark text-emerald-50;
-  }
-
-  .light body {
-    @apply bg-background-light text-[#0A0F0D];
+  aside {
+    background-color: var(--bg-surface) !important;
+    border-color: var(--border-color) !important;
   }
 }

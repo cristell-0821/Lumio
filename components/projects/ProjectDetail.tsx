@@ -69,14 +69,19 @@ export default function ProjectDetail({ project, onBack, onUpdate }: Props) {
           <span className="text-sm">Volver</span>
         </button>
         <div className="flex-1">
-          <h2 className="text-2xl font-bold text-emerald-50">{project.title}</h2>
-          <p className="text-emerald-600 text-sm mt-0.5">{project.description}</p>
+          <h2 style={{ color: 'var(--text-primary)' }} className="text-2xl font-bold">
+            {project.title}
+          </h2>
+          <p style={{ color: 'var(--text-secondary)' }} className="text-sm mt-0.5">
+            {project.description}
+          </p>
         </div>
       </div>
 
       {/* Progress */}
-      <div className="p-5 rounded-2xl bg-[#111814] border border-emerald-900/30 mb-6">
-        <div className="flex justify-between text-sm text-emerald-400 mb-2 font-medium">
+      <div className="p-5 rounded-2xl border border-emerald-900/30 mb-6"
+        style={{ backgroundColor: 'var(--bg-surface)' }}>
+        <div className="flex justify-between text-sm mb-2 font-medium text-emerald-500">
           <span>Progreso general</span>
           <span>{progress}%</span>
         </div>
@@ -86,33 +91,35 @@ export default function ProjectDetail({ project, onBack, onUpdate }: Props) {
             style={{ width: `${progress}%` }}
           />
         </div>
-        <p className="text-emerald-700 text-xs mt-2">{completed} de {total} tareas completadas</p>
+        <p style={{ color: 'var(--text-secondary)' }} className="text-xs mt-2">
+          {completed} de {total} tareas completadas
+        </p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Miembros */}
-        <div className="p-5 rounded-2xl bg-[#111814] border border-emerald-900/30">
-          <h3 className="text-emerald-100 font-semibold mb-4">Miembros</h3>
-
+        <div className="p-5 rounded-2xl border border-emerald-900/30"
+          style={{ backgroundColor: 'var(--bg-surface)' }}>
+          <h3 style={{ color: 'var(--text-primary)' }} className="font-semibold mb-4">
+            Miembros
+          </h3>
           <div className="flex gap-2 mb-4">
             <input
               placeholder="Nombre del miembro"
               value={newMember}
               onChange={e => setNewMember(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && handleAddMember()}
-              className="flex-1 px-3 py-2 rounded-xl bg-[#0A0F0D] border border-emerald-900/30
-                text-emerald-100 placeholder-emerald-800 text-sm
-                focus:outline-none focus:border-emerald-500/50"
+              className="flex-1 px-3 py-2 rounded-xl border border-emerald-900/30
+                text-sm focus:outline-none focus:border-emerald-500/50"
+              style={{ backgroundColor: 'var(--bg-main)', color: 'var(--text-primary)' }}
             />
             <button
               onClick={handleAddMember}
-              className="p-2 rounded-xl bg-emerald-500/20 text-emerald-400
-                hover:bg-emerald-500/30 transition-colors"
+              className="p-2 rounded-xl bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 transition-colors"
             >
               <UserPlus size={16} />
             </button>
           </div>
-
           <div className="flex flex-col gap-2">
             {project.members.length === 0 ? (
               <p className="text-emerald-800 text-xs">Sin miembros aún</p>
@@ -126,7 +133,9 @@ export default function ProjectDetail({ project, onBack, onUpdate }: Props) {
                       text-white text-xs font-bold">
                       {member.name[0].toUpperCase()}
                     </div>
-                    <span className="text-emerald-200 text-sm">{member.name}</span>
+                    <span style={{ color: 'var(--text-primary)' }} className="text-sm">
+                      {member.name}
+                    </span>
                   </div>
                   <button
                     onClick={() => handleDeleteMember(member.id)}
@@ -141,22 +150,26 @@ export default function ProjectDetail({ project, onBack, onUpdate }: Props) {
         </div>
 
         {/* Agregar tarea */}
-        <div className="p-5 rounded-2xl bg-[#111814] border border-emerald-900/30">
-          <h3 className="text-emerald-100 font-semibold mb-4">Nueva tarea</h3>
+        <div className="p-5 rounded-2xl border border-emerald-900/30"
+          style={{ backgroundColor: 'var(--bg-surface)' }}>
+          <h3 style={{ color: 'var(--text-primary)' }} className="font-semibold mb-4">
+            Nueva tarea
+          </h3>
           <div className="flex flex-col gap-3">
             <input
               placeholder="Título de la tarea"
               value={newTask}
               onChange={e => setNewTask(e.target.value)}
-              className="px-3 py-2 rounded-xl bg-[#0A0F0D] border border-emerald-900/30
-                text-emerald-100 placeholder-emerald-800 text-sm
-                focus:outline-none focus:border-emerald-500/50"
+              className="px-3 py-2 rounded-xl border border-emerald-900/30
+                text-sm focus:outline-none focus:border-emerald-500/50"
+              style={{ backgroundColor: 'var(--bg-main)', color: 'var(--text-primary)' }}
             />
             <select
               value={assignedTo}
               onChange={e => setAssignedTo(e.target.value)}
-              className="px-3 py-2 rounded-xl bg-[#0A0F0D] border border-emerald-900/30
-                text-emerald-100 text-sm focus:outline-none focus:border-emerald-500/50"
+              className="px-3 py-2 rounded-xl border border-emerald-900/30
+                text-sm focus:outline-none focus:border-emerald-500/50"
+              style={{ backgroundColor: 'var(--bg-main)', color: 'var(--text-primary)' }}
             >
               <option value="">Sin asignar</option>
               {project.members.map(m => (
@@ -177,8 +190,9 @@ export default function ProjectDetail({ project, onBack, onUpdate }: Props) {
       </div>
 
       {/* Lista de tareas */}
-      <div className="mt-6 p-5 rounded-2xl bg-[#111814] border border-emerald-900/30">
-        <h3 className="text-emerald-100 font-semibold mb-4">
+      <div className="mt-6 p-5 rounded-2xl border border-emerald-900/30"
+        style={{ backgroundColor: 'var(--bg-surface)' }}>
+        <h3 style={{ color: 'var(--text-primary)' }} className="font-semibold mb-4">
           Tareas del proyecto
         </h3>
         {project.tasks.length === 0 ? (
@@ -187,7 +201,8 @@ export default function ProjectDetail({ project, onBack, onUpdate }: Props) {
           <div className="flex flex-col gap-2">
             {project.tasks.map(task => (
               <div key={task.id} className="flex items-center justify-between
-                px-4 py-3 rounded-xl bg-[#0A0F0D] border border-emerald-900/20">
+                px-4 py-3 rounded-xl border border-emerald-900/20"
+                style={{ backgroundColor: 'var(--bg-main)' }}>
                 <div className="flex items-center gap-3">
                   <button
                     onClick={() => handleToggleTask(task.id)}
@@ -201,12 +216,13 @@ export default function ProjectDetail({ project, onBack, onUpdate }: Props) {
                     {task.completed && <Check size={12} className="text-white" />}
                   </button>
                   <div>
-                    <p className={`text-sm transition-all ${task.completed
-                      ? 'line-through text-emerald-700'
-                      : 'text-emerald-100'}`}>
+                    <p className={`text-sm transition-all ${task.completed ? 'line-through text-emerald-700' : ''}`}
+                      style={!task.completed ? { color: 'var(--text-primary)' } : {}}>
                       {task.title}
                     </p>
-                    <p className="text-xs text-emerald-700">{getMemberName(task.assignedTo)}</p>
+                    <p style={{ color: 'var(--text-secondary)' }} className="text-xs">
+                      {getMemberName(task.assignedTo)}
+                    </p>
                   </div>
                 </div>
                 <button

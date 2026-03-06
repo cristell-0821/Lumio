@@ -21,15 +21,11 @@ export default function RootLayout({
 }) {
   return (
     <html lang="es" suppressHydrationWarning>
-      <body className={`${sora.variable} font-sora antialiased bg-[#0A0F0D]`}>
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="dark"
-          enableSystem
-        >
+      <body className={`${sora.variable} font-sora antialiased`}>
+        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
           <div className="flex min-h-screen">
             <Sidebar />
-            <main className="lg:ml-64 flex-1 p-6 lg:p-8 pt-20 lg:pt-8">
+            <main className="flex-1 p-6 lg:p-8 pt-20 lg:pt-8 min-w-0">
               {children}
             </main>
           </div>

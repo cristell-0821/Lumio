@@ -7,6 +7,11 @@ import { useEffect, useState } from 'react'
 export default function ThemeToggle() {
   const { theme, setTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
+  const handleToggle = () => {
+  const next = theme === 'dark' ? 'light' : 'dark'
+  console.log('Cambiando tema a:', next)
+  setTheme(next)
+}
 
   useEffect(() => setMounted(true), [])
 
@@ -14,7 +19,7 @@ export default function ThemeToggle() {
 
   return (
     <button
-      onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+      onClick={handleToggle}
       className="p-2 rounded-lg transition-all duration-200 
         hover:bg-emerald-500/10 text-emerald-400 hover:text-emerald-300"
       aria-label="Toggle theme"
