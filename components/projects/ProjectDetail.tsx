@@ -14,16 +14,62 @@ export default function ProjectDetail({ project, onBack, onUpdate }: Props) {
   const [newTask, setNewTask] = useState('')
   const [assignedTo, setAssignedTo] = useState('')
   const [newMember, setNewMember] = useState('')
+  const [memberError, setMemberError] = useState('')
+  const [taskError, setTaskError] = useState('')
 
   const handleAddMember = () => {
-    if (!newMember.trim()) return
+    if (!newMember.trim()) {
+      setMemberError('Ingresa el nombre del miembro.')
+      return
+    }
+
+    const soloNumeros = /^\d+$/.test(newMember.trim())
+    if (soloNumeros) {
+      setMemberError('El nombre no puede ser solo números.')
+      return
+    }
+
+    if (newMember.trim().length < 2) {
+      setMemberError('El nombre debe tener al menos 2 caracteres.')
+      return
+    }
+
+    // Verificar duplicados
+    const existe = project.members.some(
+      m => m.name.toLowerCase() === newMember.trim().toLowerCase()
+    )
+    if (existe) {
+      setMemberError('Este miembro ya fue agregado.')
+      return
+    }
+
+    setMemberError('')
     const member: Member = { id: crypto.randomUUID(), name: newMember.trim() }
     onUpdate({ ...project, members: [...project.members, member] })
     setNewMember('')
   }
 
   const handleAddTask = () => {
-    if (!newTask.trim()) return
+    if (!newTask.trim()) {
+      setTaskError('Ingresa el título de la tarea.')
+      return
+    }
+
+    if (newTask.trim().length < 3) {
+      setTaskError('El título debe tener al menos 3 caracteres.')
+      return
+    }
+
+    // Verificar duplicados
+    const existe = project.tasks.some(
+      t => t.title.toLowerCase() === newTask.trim().toLowerCase()
+    )
+    if (existe) {
+      setTaskError('Ya existe una tarea con ese nombre.')
+      return
+    }
+
+    setTaskError('')
     const task: ProjectTask = {
       id: crypto.randomUUID(),
       title: newTask.trim(),
@@ -107,7 +153,7 @@ export default function ProjectDetail({ project, onBack, onUpdate }: Props) {
             <input
               placeholder="Nombre del miembro"
               value={newMember}
-              onChange={e => setNewMember(e.target.value)}
+              onChange={e => {setNewMember(e.target.value); setTaskError('') }}
               onKeyDown={e => e.key === 'Enter' && handleAddMember()}
               className="flex-1 px-3 py-2 rounded-xl border border-emerald-900/30
                 text-sm focus:outline-none focus:border-emerald-500/50"
@@ -120,6 +166,11 @@ export default function ProjectDetail({ project, onBack, onUpdate }: Props) {
               <UserPlus size={16} />
             </button>
           </div>
+          {memberError && (
+              <p className="text-xs text-red-400 flex items-center gap-1 mb-2">
+                <span>⚠</span> {memberError}
+              </p>
+            )}
           <div className="flex flex-col gap-2">
             {project.members.length === 0 ? (
               <p className="text-emerald-800 text-xs">Sin miembros aún</p>
@@ -159,11 +210,16 @@ export default function ProjectDetail({ project, onBack, onUpdate }: Props) {
             <input
               placeholder="Título de la tarea"
               value={newTask}
-              onChange={e => setNewTask(e.target.value)}
+              onChange={e =>{setNewTask(e.target.value); setTaskError('') }}
               className="px-3 py-2 rounded-xl border border-emerald-900/30
                 text-sm focus:outline-none focus:border-emerald-500/50"
               style={{ backgroundColor: 'var(--bg-main)', color: 'var(--text-primary)' }}
             />
+            {taskError && (
+              <p className="text-xs text-red-400 flex items-center gap-1">
+                <span>⚠</span> {taskError}
+              </p>
+            )}
             <select
               value={assignedTo}
               onChange={e => setAssignedTo(e.target.value)}
@@ -220,9 +276,23 @@ export default function ProjectDetail({ project, onBack, onUpdate }: Props) {
                       style={!task.completed ? { color: 'var(--text-primary)' } : {}}>
                       {task.title}
                     </p>
-                    <p style={{ color: 'var(--text-secondary)' }} className="text-xs">
-                      {getMemberName(task.assignedTo)}
-                    </p>
+                    <select
+                      value={task.assignedTo}
+                      onChange={e => {
+                        const updated = project.tasks.map(t =>
+                          t.id === task.id ? { ...t, assignedTo: e.target.value } : t
+                        )
+                        onUpdate({ ...project, tasks: updated })
+                      }}
+                      className="text-xs mt-0.5 rounded-lg px-2 py-0.5 border border-emerald-900/30
+                        focus:outline-none focus:border-emerald-500/50 transition-colors"
+                      style={{ backgroundColor: 'var(--bg-surface)', color: 'var(--text-secondary)' }}
+                    >
+                      <option value="">Sin asignar</option>
+                      {project.members.map(m => (
+                        <option key={m.id} value={m.id}>{m.name}</option>
+                      ))}
+                    </select>
                   </div>
                 </div>
                 <button

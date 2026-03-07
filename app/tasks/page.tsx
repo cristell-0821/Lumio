@@ -22,6 +22,8 @@ export default function TasksPage() {
     priority: 'media' as Priority,
   })
   const { toast, showToast, hideToast } = useToast()
+  const [formError, setFormError] = useState('')
+  const [editingTask, setEditingTask] = useState<Task | null>(null)
 
   useEffect(() => {
     setTasks(taskStorage.getAll())
@@ -42,23 +44,58 @@ export default function TasksPage() {
     showToast('¡Tarea creada exitosamente!')
   }
 
-  const handleAdd = () => {
-    if (!form.title || !form.subject || !form.deadline) return
+  const handleEdit = (task: Task) => {
+    setEditingTask(task)
+    setForm({
+      title: task.title,
+      subject: task.subject,
+      deadline: task.deadline,
+      priority: task.priority,
+    })
+    setShowForm(true)
+  }
 
-    const newTask: Task = {
-      id: crypto.randomUUID(),
-      title: form.title,
-      subject: form.subject,
-      deadline: form.deadline,
-      priority: form.priority,
-      status: 'pendiente',
-      createdAt: new Date().toISOString(),
+  const handleAdd = () => {
+    if (!form.title.trim() || !form.subject.trim() || !form.deadline) {
+      setFormError('Por favor completa todos los campos.')
+      return
     }
 
-    const updated = [...tasks, newTask]
-    setTasks(updated)
-    taskStorage.save(updated)
-    showToast('¡Tarea creada exitosamente!')
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    const selected = new Date(form.deadline + 'T00:00:00')
+    if (selected < today) {
+      setFormError('La fecha no puede ser anterior a hoy.')
+      return
+    }
+
+    setFormError('')
+    if (editingTask) {
+      const updated = tasks.map(t =>
+        t.id === editingTask.id
+          ? { ...t, title: form.title, subject: form.subject, deadline: form.deadline, priority: form.priority }
+          : t
+      )
+      setTasks(updated)
+      taskStorage.save(updated)
+      showToast('¡Tarea actualizada!')
+      setEditingTask(null)
+    } else {
+      const newTask: Task = {
+        id: crypto.randomUUID(),
+        title: form.title,
+        subject: form.subject,
+        deadline: form.deadline,
+        priority: form.priority,
+        status: 'pendiente',
+        createdAt: new Date().toISOString(),
+      }
+      const updated = [...tasks, newTask]
+      setTasks(updated)
+      taskStorage.save(updated)
+      showToast('¡Tarea creada exitosamente!')
+    }
+
     setForm({ title: '', subject: '', deadline: '', priority: 'media' })
     setShowForm(false)
   }
@@ -95,8 +132,13 @@ export default function TasksPage() {
         <div className="mb-8 p-6 rounded-2xl border border-emerald-900/30"
           style={{ backgroundColor: 'var(--bg-surface)' }}>
           <div className="flex items-center justify-between mb-4">
-            <h3 style={{ color: 'var(--text-primary)' }} className="font-semibold">Nueva tarea</h3>
-            <button onClick={() => setShowForm(false)} className="text-emerald-700 hover:text-emerald-400">
+            <h3 style={{ color: 'var(--text-primary)' }} className="font-semibold">{editingTask ? 'Editar tarea' : 'Nueva tarea'}</h3>
+            <button onClick={() => {
+              setShowForm(false)
+              setEditingTask(null)
+              setForm({ title: '', subject: '', deadline: '', priority: 'media' })
+              setFormError('')
+            }}>
               <X size={18} />
             </button>
           </div>
@@ -104,7 +146,7 @@ export default function TasksPage() {
             <input
               placeholder="Título de la tarea"
               value={form.title}
-              onChange={e => setForm({ ...form, title: e.target.value })}
+              onChange={e => {setForm({ ...form, title: e.target.value });; setFormError('')}}
               className="px-4 py-2.5 rounded-xl border border-emerald-900/30
                 text-sm focus:outline-none focus:border-emerald-500/50"
               style={{
@@ -115,7 +157,7 @@ export default function TasksPage() {
             <input
               placeholder="Materia"
               value={form.subject}
-              onChange={e => setForm({ ...form, subject: e.target.value })}
+              onChange={e => {setForm({ ...form, subject: e.target.value }); setFormError('') }}
               className="px-4 py-2.5 rounded-xl border border-emerald-900/30
                 text-sm focus:outline-none focus:border-emerald-500/50"
               style={{
@@ -126,13 +168,11 @@ export default function TasksPage() {
             <input
               type="date"
               value={form.deadline}
-              onChange={e => setForm({ ...form, deadline: e.target.value })}
+              min={new Date().toISOString().split('T')[0]}
+              onChange={e =>{ setForm({ ...form, deadline: e.target.value }); setFormError('') }}
               className="px-4 py-2.5 rounded-xl border border-emerald-900/30
                 text-sm focus:outline-none focus:border-emerald-500/50"
-              style={{
-                backgroundColor: 'var(--bg-main)',
-                color: 'var(--text-primary)',
-              }}
+              style={{ backgroundColor: 'var(--bg-main)', color: 'var(--text-primary)' }}
             />
             <select
               value={form.priority}
@@ -149,12 +189,17 @@ export default function TasksPage() {
               <option value="baja">Baja prioridad</option>
             </select>
           </div>
+          {formError && (
+            <p className="mt-3 text-xs text-red-400 flex items-center gap-1">
+              <span>⚠</span> {formError}
+            </p>
+          )}
           <button
             onClick={handleAdd}
             className="mt-4 px-6 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500
               to-teal-500 text-white font-medium text-sm hover:opacity-90 transition-opacity"
           >
-            Agregar tarea
+            {editingTask ? 'Guardar cambios' : 'Agregar tarea'}
           </button>
         </div>
       )}
@@ -167,6 +212,7 @@ export default function TasksPage() {
               status={status}
               tasks={tasks.filter(t => t.status === status)}
               onDelete={handleDelete}
+              onEdit={handleEdit}
             />
           ))}
         </div>

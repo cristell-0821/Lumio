@@ -19,6 +19,22 @@ export default function FlashcardGenerator({ onGenerated }: Props) {
 
   const handleGenerate = async () => {
     if (!input.trim()) return
+
+    const soloNumeros = /^\d+$/.test(input.trim())
+    if (soloNumeros) {
+      setError('Por favor ingresa un tema válido, no solo números.')
+      return
+    }
+
+    // Validar mínimo de caracteres
+    if (input.trim().length < 3) {
+      setError('El tema debe tener al menos 3 caracteres.')
+      return
+    }
+    if (mode === 'text' && input.trim().split(/\s+/).length < 10) {
+      setError('Pega un texto más largo para generar flashcards útiles.')
+      return
+    }
     setLoading(true)
     setError('')
 

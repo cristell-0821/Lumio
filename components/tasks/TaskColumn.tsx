@@ -3,6 +3,8 @@
 import { Task, TaskStatus } from '@/types'
 import { Droppable } from '@hello-pangea/dnd'
 import TaskCard from './TaskCard'
+import ConfirmModal from '@/components/ui/ConfirmModal'
+import { useState } from 'react'
 
 const columnStyles: Record<TaskStatus, { label: string; border: string; badge: string }> = {
   'pendiente': {
@@ -26,55 +28,67 @@ interface Props {
   status: TaskStatus
   tasks: Task[]
   onDelete: (id: string) => void
+  onEdit: (task: Task) => void
 }
 
-export default function TaskColumn({ status, tasks, onDelete }: Props) {
+export default function TaskColumn({ status, tasks, onDelete, onEdit }: Props) {
   const style = columnStyles[status]
+  const [taskToDelete, setTaskToDelete] = useState<Task | null>(null)
 
   return (
-    <div
-      className={`flex flex-col rounded-2xl border ${style.border} p-4 min-h-[500px]`}
-      style={{ backgroundColor: 'var(--bg-surface)' }}
-    >
-      {/* Header */}
-      <div className="flex items-center justify-between mb-4">
-        <h3 style={{ color: 'var(--text-primary)' }} className="font-semibold text-sm">
-          {style.label}
-        </h3>
-        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${style.badge}`}>
-          {tasks.length}
-        </span>
+    <>
+      <div
+        className={`flex flex-col rounded-2xl border ${style.border} p-4 min-h-[500px]`}
+        style={{ backgroundColor: 'var(--bg-surface)' }}
+      >
+        <div className="flex items-center justify-between mb-4">
+          <h3 style={{ color: 'var(--text-primary)' }} className="font-semibold text-sm">
+            {style.label}
+          </h3>
+          <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${style.badge}`}>
+            {tasks.length}
+          </span>
+        </div>
+
+        <Droppable droppableId={status}>
+          {(provided, snapshot) => (
+            <div
+              ref={provided.innerRef}
+              {...provided.droppableProps}
+              className={`flex flex-col gap-3 flex-1 rounded-xl transition-colors duration-200 p-1
+                ${snapshot.isDraggingOver ? 'bg-emerald-500/5' : ''}`}
+            >
+              {tasks.map((task, index) => (
+                <TaskCard
+                  key={task.id}
+                  task={task}
+                  index={index}
+                  onDelete={onDelete}
+                  onEdit={onEdit}
+                  onConfirmDelete={setTaskToDelete}
+                />
+              ))}
+              {provided.placeholder}
+
+              {tasks.length === 0 && !snapshot.isDraggingOver && (
+                <div className="flex-1 flex items-center justify-center">
+                  <p style={{ color: 'var(--text-secondary)' }} className="text-xs">
+                    Sin tareas aquí
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+        </Droppable>
       </div>
 
-      {/* Cards */}
-      <Droppable droppableId={status}>
-        {(provided, snapshot) => (
-          <div
-            ref={provided.innerRef}
-            {...provided.droppableProps}
-            className={`flex flex-col gap-3 flex-1 rounded-xl transition-colors duration-200 p-1
-              ${snapshot.isDraggingOver ? 'bg-emerald-500/5' : ''}`}
-          >
-            {tasks.map((task, index) => (
-              <TaskCard
-                key={task.id}
-                task={task}
-                index={index}
-                onDelete={onDelete}
-              />
-            ))}
-            {provided.placeholder}
-
-            {tasks.length === 0 && !snapshot.isDraggingOver && (
-              <div className="flex-1 flex items-center justify-center">
-                <p style={{ color: 'var(--text-secondary)' }} className="text-xs">
-                  Sin tareas aquí
-                </p>
-              </div>
-            )}
-          </div>
-        )}
-      </Droppable>
-    </div>
+      <ConfirmModal
+        isOpen={!!taskToDelete}
+        title="¿Eliminar tarea?"
+        message={`"${taskToDelete?.title}" será eliminada permanentemente.`}
+        onConfirm={() => { onDelete(taskToDelete!.id); setTaskToDelete(null) }}
+        onCancel={() => setTaskToDelete(null)}
+      />
+    </>
   )
 }

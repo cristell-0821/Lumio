@@ -34,3 +34,6 @@
     border-color: var(--border-color) !important;
   }
 }
+.task-card {
+  background-color: var(--bg-surface);
+}

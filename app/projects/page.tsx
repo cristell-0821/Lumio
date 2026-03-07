@@ -20,27 +20,58 @@ export default function ProjectsPage() {
     deadline: '',
   })
   const { toast, showToast, hideToast } = useToast()
+  const [formError, setFormError] = useState('')
+  const [editingProject, setEditingProject] = useState<Project | null>(null)
 
   useEffect(() => {
     setProjects(projectStorage.getAll())
   }, [])
 
   const handleAdd = () => {
-    if (!form.title.trim() || !form.deadline) return
-    const newProject: Project = {
-      id: crypto.randomUUID(),
-      title: form.title,
-      description: form.description,
-      deadline: form.deadline,
-      members: [],
-      tasks: [],
-      createdAt: new Date().toISOString(),
+    if (!form.title.trim() || !form.deadline) {
+      setFormError('Por favor completa todos los campos.')
+      return
     }
-    projectStorage.add(newProject)
-    setProjects(projectStorage.getAll())
+    
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    const selected = new Date(form.deadline + 'T00:00:00')
+    if (selected < today) {
+      setFormError('La fecha no puede ser anterior a hoy.')
+      return
+    }
+
+    setFormError('')
+
+    if (editingProject) {
+      // Modo edición
+      const updated = {
+        ...editingProject,
+        title: form.title,
+        description: form.description,
+        deadline: form.deadline,
+      }
+      projectStorage.update(updated)
+      setProjects(projectStorage.getAll())
+      showToast('¡Proyecto actualizado!')
+      setEditingProject(null)
+    } else {
+      // Modo creación
+      const newProject: Project = {
+        id: crypto.randomUUID(),
+        title: form.title,
+        description: form.description,
+        deadline: form.deadline,
+        members: [],
+        tasks: [],
+        createdAt: new Date().toISOString(),
+      }
+      projectStorage.add(newProject)
+      setProjects(projectStorage.getAll())
+      showToast('¡Proyecto creado exitosamente!')
+    }
     setForm({ title: '', description: '', deadline: '' })
     setShowForm(false)
-    showToast('¡Proyecto creado exitosamente!')
   }
 
   const handleUpdate = (updated: Project) => {
@@ -53,6 +84,16 @@ export default function ProjectsPage() {
     projectStorage.delete(id)
     setProjects(projectStorage.getAll())
     showToast('Proyecto eliminado.')
+  }
+
+  const handleEdit = (project: Project) => {
+    setEditingProject(project)
+    setForm({
+      title: project.title,
+      description: project.description,
+      deadline: project.deadline,
+    })
+    setShowForm(true)
   }
 
   if (activeProject) {
@@ -95,9 +136,9 @@ export default function ProjectsPage() {
           style={{ backgroundColor: 'var(--bg-surface)' }}>
           <div className="flex items-center justify-between mb-4">
             <h3 style={{ color: 'var(--text-primary)' }} className="font-semibold">
-              Nuevo proyecto
+              {editingProject ? 'Editar proyecto' : 'Nuevo proyecto'}
             </h3>
-            <button onClick={() => setShowForm(false)} className="text-emerald-700 hover:text-emerald-400">
+            <button onClick={() => { setShowForm(false); setEditingProject(null); setForm({ title: '', description: '', deadline: '' }) }}>
               <X size={18} />
             </button>
           </div>
@@ -105,7 +146,7 @@ export default function ProjectsPage() {
             <input
               placeholder="Nombre del proyecto"
               value={form.title}
-              onChange={e => setForm({ ...form, title: e.target.value })}
+              onChange={e => {setForm({ ...form, title: e.target.value }); setFormError('') }}
               className="px-4 py-2.5 rounded-xl border border-emerald-900/30
                 text-sm focus:outline-none focus:border-emerald-500/50"
               style={{ backgroundColor: 'var(--bg-main)', color: 'var(--text-primary)' }}
@@ -113,13 +154,14 @@ export default function ProjectsPage() {
             <input
               type="date"
               value={form.deadline}
-              onChange={e => setForm({ ...form, deadline: e.target.value })}
+              min={new Date().toISOString().split('T')[0]}
+              onChange={e => { setForm({ ...form, deadline: e.target.value }); setFormError('') }}
               className="px-4 py-2.5 rounded-xl border border-emerald-900/30
                 text-sm focus:outline-none focus:border-emerald-500/50"
               style={{ backgroundColor: 'var(--bg-main)', color: 'var(--text-primary)' }}
             />
             <textarea
-              placeholder="Descripción del proyecto"
+              placeholder="Descripción del proyecto (opcional)"
               value={form.description}
               onChange={e => setForm({ ...form, description: e.target.value })}
               rows={3}
@@ -128,12 +170,17 @@ export default function ProjectsPage() {
               style={{ backgroundColor: 'var(--bg-main)', color: 'var(--text-primary)' }}
             />
           </div>
+          {formError && (
+            <p className="mt-3 text-xs text-red-400 flex items-center gap-1">
+              <span>⚠</span> {formError}
+            </p>
+          )}
           <button
             onClick={handleAdd}
             className="mt-4 px-6 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500
               to-teal-500 text-white font-medium text-sm hover:opacity-90 transition-opacity"
           >
-            Crear proyecto
+             {editingProject ? 'Guardar cambios' : 'Crear proyecto'}
           </button>
         </div>
       )}
@@ -152,6 +199,7 @@ export default function ProjectsPage() {
               project={project}
               onClick={() => setActiveProject(project)}
               onDelete={handleDelete}
+              onEdit={handleEdit}
             />
           ))}
         </div>
