@@ -1,36 +1,124 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🌿 Lumio — Asistente Académico Inteligente
 
-## Getting Started
+Lumio es una aplicación web para estudiantes universitarios que combina gestión de tareas, estudio con flashcards generadas por IA y planificación de proyectos grupales. Todo en un solo lugar, con soporte para modo oscuro y claro.
 
-First, run the development server:
+---
+
+## ✨ Funcionalidades
+
+### 🗂️ Tareas & Kanban
+- Tablero Kanban con columnas: **Pendiente**, **En Progreso** y **Listo**
+- Drag & drop para mover tareas entre columnas
+- Prioridades: alta, media y baja
+- Filtros por prioridad y por materia
+- Validación de fechas (no permite fechas pasadas)
+- Editar y eliminar tareas con confirmación
+
+### 🃏 Flashcards con IA
+- Generación automática de flashcards a partir de un **tema** o **texto**
+- Animación de volteo (flip) en cada tarjeta
+- Guardar sets por materia
+- **Exportar sets a PDF** con diseño profesional
+
+### 👥 Proyectos Grupales
+- Crear proyectos con nombre, descripción y fecha límite
+- Agregar miembros y asignar tareas
+- Reasignar tareas en cualquier momento
+- Barra de progreso según tareas completadas
+- Editar proyectos existentes
+
+### ⏱️ Modo Focus (Pomodoro)
+- Timer con anillo SVG animado
+- Sesiones de foco y descanso personalizables
+- Sonido al terminar cada sesión
+- Frases motivacionales al completar
+- Contador de sesiones del día
+
+### 🤖 Dashboard con IA
+- Saludo personalizado generado por IA según tus tareas pendientes
+- Resumen de actividad académica en tiempo real
+
+---
+
+## 🛠️ Stack Tecnológico
+
+| Tecnología | Uso |
+|---|---|
+| **Next.js 14** | Framework principal (App Router) |
+| **TypeScript** | Tipado estático |
+| **Tailwind CSS v4** | Estilos y diseño |
+| **Groq API** (Llama 3.3) | Inteligencia artificial |
+| **@hello-pangea/dnd** | Drag & drop del Kanban |
+| **next-themes** | Dark/Light mode |
+| **jsPDF** | Exportar flashcards a PDF |
+| **lucide-react** | Íconos |
+| **localStorage** | Persistencia de datos |
+
+---
+
+## 🚀 Correr el proyecto localmente
+
+### 1. Clonar el repositorio
+
+```bash
+git clone https://github.com/cristell-0821/lumio.git
+cd lumio
+```
+
+### 2. Instalar dependencias
+
+```bash
+npm install
+```
+
+### 3. Configurar variables de entorno
+
+Crea un archivo `.env.local` en la raíz del proyecto:
+
+```env
+GROQ_API_KEY=tu_api_key_aqui
+```
+
+Puedes obtener una API key gratuita en [console.groq.com](https://console.groq.com)
+
+### 4. Correr el servidor de desarrollo
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Abre [http://localhost:3000](http://localhost:3000) en tu navegador.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 📁 Estructura del proyecto
 
-## Learn More
+```
+lumio/
+├── app/
+│   ├── layout.tsx          # Layout global + theme provider
+│   ├── page.tsx            # Dashboard principal
+│   ├── tasks/page.tsx      # Kanban de tareas
+│   ├── flashcards/page.tsx # Flashcards con IA
+│   ├── projects/page.tsx   # Proyectos grupales
+│   ├── focus/page.tsx      # Timer Pomodoro
+│   └── api/ai/route.ts     # Endpoint seguro para Groq API
+├── components/
+│   ├── ui/                 # ConfirmModal, Toast, PageTransition
+│   ├── layout/             # Sidebar, ThemeToggle
+│   ├── tasks/              # TaskCard, TaskColumn
+│   ├── flashcards/         # FlashCard, FlashcardGenerator
+│   └── projects/           # ProjectCard, ProjectDetail
+├── lib/
+│   ├── storage.ts          # Helpers de localStorage
+│   ├── prompts.ts          # Prompts para la IA
+│   ├── exportPDF.ts        # Exportar flashcards a PDF
+│   └── useToast.ts         # Hook para notificaciones
+└── types/
+    └── index.ts            # Tipos TypeScript globales
+```
 
-To learn more about Next.js, take a look at the following resources:
+## 👨‍💻 Autor
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Desarrollado por: cristell-0821 
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
