@@ -34,10 +34,7 @@ export default function Dashboard() {
       projects: projects.filter(p => p.tasks.some(t => !t.completed)).length,
     })
 
-    // TODO: descomentar cuando el proyecto esté listo 
-    // fetchGreeting(pendingTasks.length, urgentTasks, projects.length)
-    setGreeting('¡Bienvenido a Lumio! Listo para ayudarte hoy. 🌿')
-    setLoadingGreeting(false)
+    fetchGreeting(pendingTasks.length, urgentTasks, projects.length)
   }, [])
 
   const fetchGreeting = async (taskCount: number, urgentTasks: string[], projectCount: number) => {

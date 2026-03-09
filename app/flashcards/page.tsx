@@ -5,9 +5,10 @@ import { Flashcard, FlashcardSet } from '@/types'
 import { flashcardStorage } from '@/lib/storage'
 import FlashCard from '@/components/flashcards/FlashCard'
 import FlashcardGenerator from '@/components/flashcards/FlashcardGenerator'
-import { Plus, Trash2, ChevronLeft } from 'lucide-react'
+import { Plus, Trash2, ChevronLeft, Download } from 'lucide-react'
 import PageTransition from '@/components/ui/PageTransition'
 import ConfirmModal from '@/components/ui/ConfirmModal'
+import { exportFlashcardsToPDF } from '@/lib/exportPDF'
 
 export default function FlashcardsPage() {
   const [sets, setSets] = useState<FlashcardSet[]>([])
@@ -54,22 +55,33 @@ export default function FlashcardsPage() {
     return (
       <PageTransition>
       <div className="max-w-4xl mx-auto">
-        <div className="flex items-center gap-4 mb-8">
-          <button
-            onClick={() => setActiveSet(null)}
-            className="flex items-center gap-2 text-emerald-600 hover:text-emerald-400 transition-colors"
-          >
-            <ChevronLeft size={18} />
-            <span className="text-sm">Volver</span>
-          </button>
-          <div>
-            <h2 style={{ color: 'var(--text-primary)' }} className="text-2xl font-bold">
-              {activeSet.title}
-            </h2>
-            <p className="text-emerald-600 text-sm mt-0.5">
-              {activeSet.subject} · {activeSet.cards.length} tarjetas
-            </p>
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => setActiveSet(null)}
+              className="flex items-center gap-2 text-emerald-600 hover:text-emerald-400 transition-colors"
+            >
+              <ChevronLeft size={18} />
+              <span className="text-sm">Volver</span>
+            </button>
+            <div>
+              <h2 style={{ color: 'var(--text-primary)' }} className="text-2xl font-bold">
+                {activeSet.title}
+              </h2>
+              <p className="text-emerald-600 text-sm mt-0.5">
+                {activeSet.subject} · {activeSet.cards.length} tarjetas
+              </p>
+            </div>
           </div>
+          <button
+            onClick={() => exportFlashcardsToPDF(activeSet)}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl
+              bg-gradient-to-r from-emerald-500 to-teal-500
+              text-white font-medium text-sm hover:opacity-90 transition-opacity"
+          >
+            <Download size={15} />
+            Exportar PDF
+          </button>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

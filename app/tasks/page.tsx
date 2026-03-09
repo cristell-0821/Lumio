@@ -24,6 +24,8 @@ export default function TasksPage() {
   const { toast, showToast, hideToast } = useToast()
   const [formError, setFormError] = useState('')
   const [editingTask, setEditingTask] = useState<Task | null>(null)
+  const [filterPriority, setFilterPriority] = useState<Priority | 'todas'>('todas')
+  const [filterSubject, setFilterSubject] = useState('')
 
   useEffect(() => {
     setTasks(taskStorage.getAll())
@@ -106,6 +108,14 @@ export default function TasksPage() {
     taskStorage.save(updated)
     showToast('Tarea eliminada.')
   }
+
+  const subjects = [...new Set(tasks.map(t => t.subject))].filter(Boolean)
+
+  const filteredTasks = tasks.filter(t => {
+    const matchPriority = filterPriority === 'todas' || t.priority === filterPriority
+    const matchSubject = !filterSubject || t.subject === filterSubject
+    return matchPriority && matchSubject
+  })
 
   return (
     <PageTransition>
@@ -203,6 +213,59 @@ export default function TasksPage() {
           </button>
         </div>
       )}
+      {/* Filtros */}
+      <div className="flex items-center gap-3 mb-6 flex-wrap">
+        <span style={{ color: 'var(--text-secondary)' }} className="text-xs font-medium">
+          Filtrar por:
+        </span>
+
+        {/* Prioridad */}
+        {(['todas', 'alta', 'media', 'baja'] as const).map(p => (
+          <button
+            key={p}
+            onClick={() => setFilterPriority(p)}
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all
+              ${filterPriority === p
+                ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                : 'border border-transparent hover:bg-emerald-500/10'
+              }`}
+            style={filterPriority !== p ? { color: 'var(--text-secondary)' } : {}}
+          >
+            {p.charAt(0).toUpperCase() + p.slice(1)}
+          </button>
+        ))}
+
+        {/* Separador */}
+        {subjects.length > 0 && (
+          <div className="h-4 w-px bg-emerald-900/40" />
+        )}
+
+        {/* Materias */}
+        {subjects.map(subject => (
+          <button
+            key={subject}
+            onClick={() => setFilterSubject(filterSubject === subject ? '' : subject)}
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all
+              ${filterSubject === subject
+                ? 'bg-teal-500/20 text-teal-400 border border-teal-500/30'
+                : 'border border-transparent hover:bg-teal-500/10'
+              }`}
+            style={filterSubject !== subject ? { color: 'var(--text-secondary)' } : {}}
+          >
+            {subject}
+          </button>
+        ))}
+
+        {/* Limpiar filtros */}
+        {(filterPriority !== 'todas' || filterSubject) && (
+          <button
+            onClick={() => { setFilterPriority('todas'); setFilterSubject('') }}
+            className="text-xs text-red-400 hover:text-red-300 transition-colors ml-1"
+          >
+            Limpiar ✕
+          </button>
+        )}
+      </div>
       {/* Kanban */}
       <DragDropContext onDragEnd={handleDragEnd}>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -210,7 +273,7 @@ export default function TasksPage() {
             <TaskColumn
               key={status}
               status={status}
-              tasks={tasks.filter(t => t.status === status)}
+              tasks={filteredTasks.filter(t => t.status === status)}
               onDelete={handleDelete}
               onEdit={handleEdit}
             />
