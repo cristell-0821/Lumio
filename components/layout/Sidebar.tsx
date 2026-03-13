@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, CheckSquare, BookOpen, Users, Timer, Menu, X, ChevronLeft, ChevronRight } from 'lucide-react'
+import { LayoutDashboard, CheckSquare, CalendarDays, Users, Timer, Menu, X, ChevronLeft, ChevronRight, Brain } from 'lucide-react'
 import ThemeToggle from './ThemeToggle'
 import { useState, useEffect, useRef } from 'react'
 import { useTheme } from 'next-themes'
@@ -10,9 +10,10 @@ import { useTheme } from 'next-themes'
 const navItems = [
   { href: '/', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/tasks', label: 'Tareas', icon: CheckSquare },
-  { href: '/flashcards', label: 'Flashcards', icon: BookOpen },
+  { href: '/quiz', label: 'Quiz IA', icon: Brain },
   { href: '/projects', label: 'Proyectos', icon: Users },
   { href: '/focus', label: 'Focus', icon: Timer },
+  { href: '/calendar', label: 'Calendario', icon: CalendarDays },
 ]
 
 const MIN_WIDTH = 64

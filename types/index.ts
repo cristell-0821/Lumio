@@ -12,19 +12,34 @@ export interface Task {
   createdAt: string
 }
 
-// ===== FLASHCARDS =====
-export interface Flashcard {
+// ===== QUIZ =====
+export type QuestionType = 'multiple' | 'truefalse'
+
+export interface Question {
   id: string
+  type: QuestionType
   question: string
-  answer: string
+  options: string[]
+  correctAnswer: string
+  explanation: string
 }
 
-export interface FlashcardSet {
+export interface QuizResult {
   id: string
-  title: string
-  subject: string
-  cards: Flashcard[]
-  createdAt: string
+  topic: string
+  score: number        // sobre 20
+  correct: number      // preguntas correctas
+  total: number        // total preguntas
+  date: string
+  answers: AnswerDetail[] 
+}
+
+export interface AnswerDetail {
+  question: string
+  selected: string
+  correct: boolean
+  correctAnswer: string
+  explanation: string
 }
 
 // ===== PROJECTS =====
@@ -48,4 +63,10 @@ export interface Project {
   members: Member[]
   tasks: ProjectTask[]
   createdAt: string
+}
+
+// ===== POMODORO=====
+export interface PomodoroSession {
+  id: string
+  date: string // ISO
 }

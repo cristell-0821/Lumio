@@ -1,9 +1,9 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { taskStorage, flashcardStorage, projectStorage } from '@/lib/storage'
+import { taskStorage, quizStorage, projectStorage } from '@/lib/storage'
 import { dashboardGreetingPrompt } from '@/lib/prompts'
-import { Sparkles, CheckSquare, BookOpen, Users, ArrowRight } from 'lucide-react'
+import { Sparkles, CheckSquare, Brain, Users, ArrowRight } from 'lucide-react'
 import Link from 'next/link'
 import PageTransition from '@/components/ui/PageTransition'
 
@@ -12,13 +12,13 @@ export default function Dashboard() {
   const [loadingGreeting, setLoadingGreeting] = useState(true)
   const [stats, setStats] = useState({
     tasks: 0,
-    flashcardSets: 0,
+    quizzes: 0,
     projects: 0,
   })
 
   useEffect(() => {
     const tasks = taskStorage.getAll()
-    const flashcardSets = flashcardStorage.getAll()
+    const quizzes = quizStorage.getAll()
     const projects = projectStorage.getAll()
 
     const pendingTasks = tasks.filter(t => t.status !== 'listo')
@@ -30,7 +30,7 @@ export default function Dashboard() {
 
     setStats({
       tasks: pendingTasks.length,
-      flashcardSets: flashcardSets.length,
+      quizzes: quizzes.length,
       projects: projects.filter(p => p.tasks.some(t => !t.completed)).length,
     })
 
@@ -67,11 +67,11 @@ export default function Dashboard() {
       iconColor: 'text-emerald-500',
     },
     {
-      href: '/flashcards',
-      icon: BookOpen,
-      label: 'Flashcards',
-      value: stats.flashcardSets,
-      description: 'sets guardados',
+      href: '/quiz',
+      icon: Brain,
+      label: 'Quiz IA',
+      value: stats.quizzes,
+      description: 'exámenes realizados',
       gradient: 'from-teal-500/20 to-cyan-500/20',
       border: 'border-teal-500/30',
       iconColor: 'text-teal-500',
@@ -91,7 +91,6 @@ export default function Dashboard() {
   return (
     <PageTransition>
     <div className="max-w-4xl mx-auto">
-
       {/* Greeting */}
       <div className="mb-10 p-6 rounded-2xl bg-gradient-to-r from-emerald-500/10 to-teal-500/10 border border-emerald-500/20">
         <div className="flex items-start gap-3">

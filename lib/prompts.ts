@@ -1,32 +1,3 @@
-// ===== FLASHCARDS POR TEMA =====
-export const flashcardsFromTopicPrompt = (topic: string, amount: number = 8) => `
-Eres un asistente educativo. Genera ${amount} flashcards sobre el tema: "${topic}".
-
-Responde ÚNICAMENTE con un array JSON válido, sin texto adicional, sin markdown, sin backticks.
-Formato exacto:
-[
-  { "question": "¿Pregunta aquí?", "answer": "Respuesta aquí" },
-  ...
-]
-`
-
-// ===== FLASHCARDS POR TEXTO =====
-export const flashcardsFromTextPrompt = (text: string, amount: number = 8) => `
-Eres un asistente educativo. Analiza el siguiente texto y genera ${amount} flashcards con los conceptos más importantes.
-
-Texto:
-"""
-${text}
-"""
-
-Responde ÚNICAMENTE con un array JSON válido, sin texto adicional, sin markdown, sin backticks.
-Formato exacto:
-[
-  { "question": "¿Pregunta aquí?", "answer": "Respuesta aquí" },
-  ...
-]
-`
-
 // ===== SUGERENCIA DE PRIORIDAD =====
 export const suggestPriorityPrompt = (title: string, deadline: string) => `
 Eres un asistente de productividad. Dado el título de una tarea y su fecha límite, sugiere una prioridad.
@@ -55,4 +26,64 @@ Contexto del usuario:
 
 Responde con un mensaje corto (máximo 2 oraciones), directo y motivador en español.
 Solo el texto, sin comillas, sin formato extra.
+`
+// ===== QUIZ POR TEMA =====
+export const quizFromTopicPrompt = (topic: string) => `
+Eres un profesor peruano. Genera exactamente 10 preguntas de examen sobre: "${topic}".
+
+Mezcla preguntas de opción múltiple (7) y verdadero/falso (3).
+
+Responde ÚNICAMENTE con un array JSON válido, sin texto adicional, sin markdown, sin backticks.
+Formato exacto:
+[
+  {
+    "id": "1",
+    "type": "multiple",
+    "question": "¿Pregunta aquí?",
+    "options": ["Opción A", "Opción B", "Opción C", "Opción D"],
+    "correctAnswer": "Opción A",
+    "explanation": "Explicación breve de por qué es correcta"
+  },
+  {
+    "id": "2",
+    "type": "truefalse",
+    "question": "Afirmación aquí",
+    "options": ["Verdadero", "Falso"],
+    "correctAnswer": "Verdadero",
+    "explanation": "Explicación breve"
+  }
+]
+`
+
+// ===== QUIZ POR PDF =====
+export const quizFromTextPrompt = (text: string) => `
+Eres un profesor peruano. Analiza el siguiente contenido y genera exactamente 10 preguntas de examen.
+
+Contenido:
+"""
+${text}
+"""
+
+Mezcla preguntas de opción múltiple (7) y verdadero/falso (3).
+
+Responde ÚNICAMENTE con un array JSON válido, sin texto adicional, sin markdown, sin backticks.
+Formato exacto:
+[
+  {
+    "id": "1",
+    "type": "multiple",
+    "question": "¿Pregunta aquí?",
+    "options": ["Opción A", "Opción B", "Opción C", "Opción D"],
+    "correctAnswer": "Opción A",
+    "explanation": "Explicación breve de por qué es correcta"
+  },
+  {
+    "id": "2",
+    "type": "truefalse",
+    "question": "Afirmación aquí",
+    "options": ["Verdadero", "Falso"],
+    "correctAnswer": "Verdadero",
+    "explanation": "Explicación breve"
+  }
+]
 `

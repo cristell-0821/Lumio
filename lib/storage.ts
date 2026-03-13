@@ -1,10 +1,11 @@
-import { Task, FlashcardSet, Project } from '@/types'
+import { Task, Project, QuizResult, PomodoroSession } from '@/types'
 
 // ===== KEYS =====
 const KEYS = {
   tasks: 'lumio_tasks',
-  flashcardSets: 'lumio_flashcard_sets',
   projects: 'lumio_projects',
+  quizResults: 'lumio_quiz_results',
+  pomodoroSessions: 'lumio_pomodoro_sessions',
 }
 
 // ===== HELPERS =====
@@ -40,16 +41,16 @@ export const taskStorage = {
   },
 }
 
-// ===== FLASHCARD SETS =====
-export const flashcardStorage = {
-  getAll: (): FlashcardSet[] => getItem<FlashcardSet>(KEYS.flashcardSets),
-  save: (sets: FlashcardSet[]): void => setItem(KEYS.flashcardSets, sets),
-  add: (set: FlashcardSet): void => {
-    const sets = flashcardStorage.getAll()
-    flashcardStorage.save([...sets, set])
+// ===== QUIZ RESULTS =====
+export const quizStorage = {
+  getAll: (): QuizResult[] => getItem<QuizResult>(KEYS.quizResults),
+  save: (results: QuizResult[]): void => setItem(KEYS.quizResults, results),
+  add: (result: QuizResult): void => {
+    const results = quizStorage.getAll()
+    quizStorage.save([...results, result])
   },
   delete: (id: string): void => {
-    flashcardStorage.save(flashcardStorage.getAll().filter(s => s.id !== id))
+    quizStorage.save(quizStorage.getAll().filter(r => r.id !== id))
   },
 }
 
@@ -68,4 +69,14 @@ export const projectStorage = {
   delete: (id: string): void => {
     projectStorage.save(projectStorage.getAll().filter(p => p.id !== id))
   },
+}
+
+// ===== POMODORO =====
+export const pomodoroStorage = {
+  getAll: (): PomodoroSession[] => getItem<PomodoroSession>(KEYS.pomodoroSessions),
+  add: (session: PomodoroSession): void => {
+    const sessions = pomodoroStorage.getAll()
+    pomodoroStorage.save([...sessions, session])
+  },
+  save: (sessions: PomodoroSession[]): void => setItem(KEYS.pomodoroSessions, sessions),
 }

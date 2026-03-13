@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import PageTransition from '@/components/ui/PageTransition'
 import { X } from 'lucide-react'
+import { pomodoroStorage } from '@/lib/storage'
 
 const MOTIVATIONAL_PHRASES = [
   '¡Excelente trabajo! Mereces ese descanso. 🌿',
@@ -61,6 +62,7 @@ export default function FocusPage() {
             playSound()
             if (!isBreak) {
               setSessions(s => s + 1)
+              pomodoroStorage.add({ id: crypto.randomUUID(), date: new Date().toISOString() }) 
               const randomPhrase = MOTIVATIONAL_PHRASES[Math.floor(Math.random() * MOTIVATIONAL_PHRASES.length)]
               setPhrase(randomPhrase)
               setShowPhrase(true)
