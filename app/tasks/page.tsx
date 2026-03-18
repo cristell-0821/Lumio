@@ -10,6 +10,7 @@ import Toast from '@/components/ui/Toast'
 import { useToast } from '@/lib/useToast'
 import { useUser } from '@clerk/nextjs'
 import { taskDB } from '@/lib/db'
+import { SkeletonTask } from '@/components/ui/Skeleton'
 
 const COLUMNS: TaskStatus[] = ['pendiente', 'en-progreso', 'listo']
 
@@ -29,10 +30,14 @@ export default function TasksPage() {
   const [filterSubject, setFilterSubject] = useState('')
   const { user } = useUser()
   const userId = user?.id || ''
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     if (!userId) return
-    taskDB.getAll(userId).then(setTasks)
+    taskDB.getAll(userId).then(data => {
+      setTasks(data)
+      setLoading(false)
+    })
   }, [userId])
 
   const handleDragEnd = async (result: DropResult) => {
@@ -256,15 +261,27 @@ export default function TasksPage() {
         {/* Kanban */}
         <DragDropContext onDragEnd={handleDragEnd}>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {COLUMNS.map(status => (
-              <TaskColumn
-                key={status}
-                status={status}
-                tasks={filteredTasks.filter(t => t.status === status)}
-                onDelete={handleDelete}
-                onEdit={handleEdit}
-              />
-            ))}
+            {loading ? (
+              COLUMNS.map(status => (
+                <div key={status} className="p-4 rounded-2xl border border-emerald-900/20"
+                  style={{ backgroundColor: 'var(--bg-surface)' }}>
+                  <div className="w-24 h-4 rounded bg-emerald-900/30 animate-pulse mb-4" />
+                  <div className="flex flex-col gap-3">
+                    {Array.from({ length: 2 }).map((_, i) => <SkeletonTask key={i} />)}
+                  </div>
+                </div>
+              ))
+            ) : (
+              COLUMNS.map(status => (
+                <TaskColumn
+                  key={status}
+                  status={status}
+                  tasks={filteredTasks.filter(t => t.status === status)}
+                  onDelete={handleDelete}
+                  onEdit={handleEdit}
+                />
+              ))
+            )}
           </div>
         </DragDropContext>
       </div>

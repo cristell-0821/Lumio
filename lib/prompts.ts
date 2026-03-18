@@ -15,17 +15,17 @@ Formato exacto:
 export const dashboardGreetingPrompt = (
   taskCount: number,
   urgentTasks: string[],
-  projectCount: number
+  projectCount: number,
+  name?: string
 ) => `
-Eres Lumio, un asistente académico amigable. Genera un saludo motivador y breve para el dashboard.
-
-Contexto del usuario:
-- Tareas pendientes: ${taskCount}
-- Tareas urgentes (próximas 24h): ${urgentTasks.join(', ') || 'ninguna'}
-- Proyectos activos: ${projectCount}
-
-Responde con un mensaje corto (máximo 2 oraciones), directo y motivador en español.
-Solo el texto, sin comillas, sin formato extra.
+Eres un asistente académico amigable llamado Lumio.
+${name ? `El estudiante se llama ${name}.` : ''}
+Genera un saludo personalizado, breve y motivador (máximo 2 oraciones) para un estudiante que tiene:
+- ${taskCount} tareas pendientes
+- ${urgentTasks.length > 0 ? `Tareas urgentes: ${urgentTasks.join(', ')}` : 'Sin tareas urgentes'}
+- ${projectCount} proyectos activos
+${name ? `Dirígete a ${name} por su nombre.` : ''}
+Responde solo el saludo, sin comillas, sin explicaciones.
 `
 // ===== QUIZ POR TEMA =====
 export const quizFromTopicPrompt = (topic: string) => `

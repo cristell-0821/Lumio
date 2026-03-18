@@ -10,6 +10,7 @@ import PageTransition from '@/components/ui/PageTransition'
 import Toast from '@/components/ui/Toast'
 import { useToast } from '@/lib/useToast'
 import { useUser } from '@clerk/nextjs'
+import { SkeletonProject } from '@/components/ui/Skeleton'
 
 export default function ProjectsPage() {
   const [projects, setProjects] = useState<Project[]>([])
@@ -21,10 +22,14 @@ export default function ProjectsPage() {
   const [editingProject, setEditingProject] = useState<Project | null>(null)
   const { user } = useUser()
   const userId = user?.id || ''
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     if (!userId) return
-    projectDB.getAll(userId).then(setProjects)
+    projectDB.getAll(userId).then(data => {
+      setProjects(data)
+      setLoading(false)
+    })
   }, [userId])
 
   const handleAdd = async () => {
@@ -171,7 +176,11 @@ export default function ProjectsPage() {
           </div>
         )}
 
-        {projects.length === 0 ? (
+        {loading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {Array.from({ length: 4 }).map((_, i) => <SkeletonProject key={i} />)}
+          </div>
+        ) : projects.length === 0 ? (
           <div className="text-center py-16 text-emerald-800">
             <p>No tienes proyectos aún.</p>
             <p className="text-xs mt-1">Crea tu primer proyecto arriba 👆</p>

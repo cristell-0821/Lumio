@@ -10,6 +10,7 @@ import Toast from '@/components/ui/Toast'
 import { useToast } from '@/lib/useToast'
 import { exportQuizToPDF } from '@/lib/exportQuizPDF'
 import { useUser } from '@clerk/nextjs'
+import { SkeletonQuiz } from '@/components/ui/Skeleton'
 
 type Mode = 'topic' | 'pdf'
 type Stage = 'setup' | 'quiz' | 'results'
@@ -31,10 +32,14 @@ export default function QuizPage() {
   const [history, setHistory] = useState<QuizResult[]>([])
   const { user } = useUser()
   const userId = user?.id || ''
+  const [loadingHistory, setLoadingHistory] = useState(true)
 
   useEffect(() => {
     if (!userId) return
-    quizDB.getAll(userId).then(setHistory)
+    quizDB.getAll(userId).then(data => {
+      setHistory(data)
+      setLoadingHistory(false)
+    })
   }, [userId])
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -249,11 +254,20 @@ export default function QuizPage() {
             </button>
           </div>
 
-          {history.length > 0 && (
-            <div className="mt-8">
-              <h3 style={{ color: 'var(--text-primary)' }} className="font-semibold mb-4">
-                Historial de exámenes
-              </h3>
+          {/* Historial */}
+          <div className="mt-8">
+            <h3 style={{ color: 'var(--text-primary)' }} className="font-semibold mb-4">
+              Historial de exámenes
+            </h3>
+            {loadingHistory ? (
+              <div className="flex flex-col gap-2">
+                {Array.from({ length: 3 }).map((_, i) => <SkeletonQuiz key={i} />)}
+              </div>
+            ) : history.length === 0 ? (
+              <p style={{ color: 'var(--text-secondary)' }} className="text-sm">
+                Aún no has realizado ningún examen.
+              </p>
+            ) : (
               <div className="flex flex-col gap-2">
                 {history.slice(0, 5).map(r => (
                   <div key={r.id}
@@ -280,8 +294,8 @@ export default function QuizPage() {
                   </div>
                 ))}
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
         <Toast message={toast.message} isVisible={toast.visible} onClose={hideToast} />
       </PageTransition>
