@@ -3,12 +3,13 @@
 import { useState, useEffect } from 'react'
 import { Question, QuizResult, AnswerDetail } from '@/types'
 import { quizFromTopicPrompt, quizFromTextPrompt } from '@/lib/prompts'
-import { quizStorage } from '@/lib/storage'
+import { quizDB } from '@/lib/db'
 import PageTransition from '@/components/ui/PageTransition'
-import { Brain, Upload, Loader2, CheckCircle, XCircle, Trophy, RotateCcw, FileText,Download } from 'lucide-react'
+import { Brain, Upload, Loader2, CheckCircle, XCircle, Trophy, RotateCcw, FileText, Download } from 'lucide-react'
 import Toast from '@/components/ui/Toast'
 import { useToast } from '@/lib/useToast'
 import { exportQuizToPDF } from '@/lib/exportQuizPDF'
+import { useUser } from '@clerk/nextjs'
 
 type Mode = 'topic' | 'pdf'
 type Stage = 'setup' | 'quiz' | 'results'
@@ -28,10 +29,13 @@ export default function QuizPage() {
   const { toast, showToast, hideToast } = useToast()
   const [quizResult, setQuizResult] = useState<QuizResult | null>(null)
   const [history, setHistory] = useState<QuizResult[]>([])
+  const { user } = useUser()
+  const userId = user?.id || ''
 
   useEffect(() => {
-    setHistory(quizStorage.getAll())
-  }, [])
+    if (!userId) return
+    quizDB.getAll(userId).then(setHistory)
+  }, [userId])
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -41,7 +45,6 @@ export default function QuizPage() {
     }
     setError('')
     setLoading(true)
-
     try {
       const arrayBuffer = await file.arrayBuffer()
       const pdfjsLib = await import('pdfjs-dist')
@@ -49,26 +52,20 @@ export default function QuizPage() {
         'pdfjs-dist/build/pdf.worker.mjs',
         import.meta.url
       ).toString()
-
       const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise
       let fullText = ''
-
       for (let i = 1; i <= pdf.numPages; i++) {
         const page = await pdf.getPage(i)
         const content = await page.getTextContent()
         const pageText = content.items.map((item: any) => ('str' in item ? item.str : '')).join(' ')
         fullText += pageText + '\n'
       }
-
-      // Limitar a ~5000 caracteres para no exceder el límite de Groq
       const trimmed = fullText.trim().slice(0, 5000)
-
       if (!trimmed) {
         setError('No se pudo extraer texto del PDF. Prueba con otro archivo.')
         setLoading(false)
         return
       }
-
       setTopic(file.name.replace('.pdf', ''))
       setInput(trimmed)
     } catch (err) {
@@ -88,25 +85,18 @@ export default function QuizPage() {
       setError('Ingresa un tema válido, no solo números.')
       return
     }
-
     setLoading(true)
     setError('')
-
     try {
-      const prompt = mode === 'topic'
-        ? quizFromTopicPrompt(input)
-        : quizFromTextPrompt(input)
-
+      const prompt = mode === 'topic' ? quizFromTopicPrompt(input) : quizFromTextPrompt(input)
       const res = await fetch('/api/ai', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ prompt }),
       })
-
       const data = await res.json()
       const clean = data.result.replace(/```json|```/g, '').trim()
       const parsed: Question[] = JSON.parse(clean)
-
       setQuestions(parsed)
       setTopic(mode === 'topic' ? input : topic)
       setStage('quiz')
@@ -125,19 +115,16 @@ export default function QuizPage() {
     setAnswered(true)
   }
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (!selected) return
-
     const q = questions[current]
     const isCorrect = selected === q.correctAnswer
     const newAnswers = [...answers, { question: q, selected, correct: isCorrect }]
     setAnswers(newAnswers)
 
     if (current + 1 >= questions.length) {
-      // Calcular nota
       const correct = newAnswers.filter(a => a.correct).length
       const score = Math.round((correct / questions.length) * 20)
-
       const result: QuizResult = {
         id: crypto.randomUUID(),
         topic,
@@ -145,7 +132,7 @@ export default function QuizPage() {
         correct,
         total: questions.length,
         date: new Date().toISOString(),
-        answers: newAnswers.map(a => ({  
+        answers: newAnswers.map(a => ({
           question: a.question.question,
           selected: a.selected,
           correct: a.correct,
@@ -153,8 +140,9 @@ export default function QuizPage() {
           explanation: a.question.explanation,
         })),
       }
-      quizStorage.add(result)
-      setHistory(quizStorage.getAll()) 
+      await quizDB.add(userId, result)
+      const updated = await quizDB.getAll(userId)
+      setHistory(updated)
       setQuizResult(result)
       setStage('results')
     } else {
@@ -193,7 +181,6 @@ export default function QuizPage() {
             </p>
           </div>
 
-          {/* Mode toggle */}
           <div className="flex gap-2 mb-6">
             {(['topic', 'pdf'] as Mode[]).map(m => (
               <button
@@ -211,7 +198,6 @@ export default function QuizPage() {
             ))}
           </div>
 
-          {/* Input */}
           <div className="p-6 rounded-2xl border border-emerald-900/30 mb-4"
             style={{ backgroundColor: 'var(--bg-surface)' }}>
             {mode === 'topic' ? (
@@ -241,22 +227,15 @@ export default function QuizPage() {
                   <span style={{ color: 'var(--text-secondary)' }} className="text-sm">
                     {topic ? `✓ ${topic}.pdf` : 'Haz clic para subir un PDF'}
                   </span>
-                  <input
-                    type="file"
-                    accept=".pdf"
-                    className="hidden"
-                    onChange={handleFileUpload}
-                  />
+                  <input type="file" accept=".pdf" className="hidden" onChange={handleFileUpload} />
                 </label>
               </>
             )}
-
             {error && (
               <p className="text-xs text-red-400 mt-3 flex items-center gap-1">
                 <span>⚠</span> {error}
               </p>
             )}
-
             <button
               onClick={handleGenerate}
               disabled={loading || !input.trim()}
@@ -270,21 +249,18 @@ export default function QuizPage() {
             </button>
           </div>
 
-          {/* Historial */}
           {history.length > 0 && (
             <div className="mt-8">
               <h3 style={{ color: 'var(--text-primary)' }} className="font-semibold mb-4">
                 Historial de exámenes
               </h3>
               <div className="flex flex-col gap-2">
-                {history.slice().reverse().slice(0, 5).map(r => (
+                {history.slice(0, 5).map(r => (
                   <div key={r.id}
                     className="flex items-center justify-between px-4 py-3 rounded-xl border border-emerald-900/30"
                     style={{ backgroundColor: 'var(--bg-surface)' }}>
                     <div>
-                      <p style={{ color: 'var(--text-primary)' }} className="text-sm font-medium">
-                        {r.topic}
-                      </p>
+                      <p style={{ color: 'var(--text-primary)' }} className="text-sm font-medium">{r.topic}</p>
                       <p style={{ color: 'var(--text-secondary)' }} className="text-xs mt-0.5">
                         {new Date(r.date).toLocaleDateString('es-PE')} · {r.correct}/{r.total} correctas
                       </p>
@@ -315,12 +291,10 @@ export default function QuizPage() {
   // ===== QUIZ =====
   if (stage === 'quiz') {
     const q = questions[current]
-    const progress = ((current) / questions.length) * 100
-
+    const progress = (current / questions.length) * 100
     return (
       <PageTransition>
         <div className="max-w-2xl mx-auto">
-          {/* Header */}
           <div className="flex items-center justify-between mb-6">
             <div>
               <h2 style={{ color: 'var(--text-primary)' }} className="text-xl font-bold">{topic}</h2>
@@ -328,24 +302,15 @@ export default function QuizPage() {
                 Pregunta {current + 1} de {questions.length}
               </p>
             </div>
-            <button
-              onClick={handleRestart}
-              style={{ color: 'var(--text-secondary)' }}
-              className="text-xs hover:text-red-400 transition-colors"
-            >
+            <button onClick={handleRestart} style={{ color: 'var(--text-secondary)' }}
+              className="text-xs hover:text-red-400 transition-colors">
               Cancelar
             </button>
           </div>
-
-          {/* Progress bar */}
           <div className="h-1.5 rounded-full bg-emerald-900/30 mb-8">
-            <div
-              className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 transition-all duration-500"
-              style={{ width: `${progress}%` }}
-            />
+            <div className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 transition-all duration-500"
+              style={{ width: `${progress}%` }} />
           </div>
-
-          {/* Question */}
           <div className="p-6 rounded-2xl border border-emerald-900/30 mb-4"
             style={{ backgroundColor: 'var(--bg-surface)' }}>
             <span className="text-xs text-emerald-500 font-medium uppercase tracking-wide">
@@ -355,35 +320,21 @@ export default function QuizPage() {
               {q.question}
             </p>
           </div>
-
-          {/* Options */}
           <div className="flex flex-col gap-3 mb-6">
             {q.options.map(option => {
               let optionStyle = 'border-emerald-900/30 hover:border-emerald-500/30'
               let textColor = 'var(--text-primary)'
-
               if (answered) {
-                if (option === q.correctAnswer) {
-                  optionStyle = 'border-emerald-500/50 bg-emerald-500/10'
-                  textColor = '#10B981'
-                } else if (option === selected && option !== q.correctAnswer) {
-                  optionStyle = 'border-red-500/50 bg-red-500/10'
-                  textColor = '#f87171'
-                }
+                if (option === q.correctAnswer) { optionStyle = 'border-emerald-500/50 bg-emerald-500/10'; textColor = '#10B981' }
+                else if (option === selected && option !== q.correctAnswer) { optionStyle = 'border-red-500/50 bg-red-500/10'; textColor = '#f87171' }
               } else if (selected === option) {
                 optionStyle = 'border-emerald-500/50 bg-emerald-500/10'
               }
-
               return (
-                <button
-                  key={option}
-                  onClick={() => handleAnswer(option)}
-                  disabled={answered}
+                <button key={option} onClick={() => handleAnswer(option)} disabled={answered}
                   className={`flex items-center justify-between px-5 py-4 rounded-xl border
-                    text-left transition-all duration-200 ${optionStyle}
-                    disabled:cursor-default`}
-                  style={{ backgroundColor: 'var(--bg-surface)', color: textColor }}
-                >
+                    text-left transition-all duration-200 ${optionStyle} disabled:cursor-default`}
+                  style={{ backgroundColor: 'var(--bg-surface)', color: textColor }}>
                   <span className="text-sm font-medium">{option}</span>
                   {answered && option === q.correctAnswer && <CheckCircle size={18} className="text-emerald-400 shrink-0" />}
                   {answered && option === selected && option !== q.correctAnswer && <XCircle size={18} className="text-red-400 shrink-0" />}
@@ -391,8 +342,6 @@ export default function QuizPage() {
               )
             })}
           </div>
-
-          {/* Explanation */}
           {answered && (
             <div className="p-4 rounded-xl border border-emerald-900/30 mb-6"
               style={{ backgroundColor: 'var(--bg-surface)' }}>
@@ -402,14 +351,10 @@ export default function QuizPage() {
               </p>
             </div>
           )}
-
-          {/* Next button */}
           {answered && (
-            <button
-              onClick={handleNext}
+            <button onClick={handleNext}
               className="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500
-                text-white font-medium text-sm hover:opacity-90 transition-opacity"
-            >
+                text-white font-medium text-sm hover:opacity-90 transition-opacity">
               {current + 1 >= questions.length ? 'Ver resultados' : 'Siguiente pregunta →'}
             </button>
           )}
@@ -422,24 +367,17 @@ export default function QuizPage() {
   return (
     <PageTransition>
       <div className="max-w-2xl mx-auto">
-        {/* Score */}
         <div className="text-center mb-10 p-8 rounded-2xl border border-emerald-900/30"
           style={{ backgroundColor: 'var(--bg-surface)' }}>
           <Trophy size={40} className="text-emerald-400 mx-auto mb-4" />
-          <h2 style={{ color: 'var(--text-primary)' }} className="text-2xl font-bold mb-1">
-            {topic}
-          </h2>
+          <h2 style={{ color: 'var(--text-primary)' }} className="text-2xl font-bold mb-1">{topic}</h2>
           <p className={`text-6xl font-bold my-4 ${scoreColor}`}>{score}/20</p>
           <p className={`text-lg font-medium ${scoreColor}`}>{scoreLabel}</p>
           <p style={{ color: 'var(--text-secondary)' }} className="text-sm mt-2">
             {correct} de {questions.length} preguntas correctas
           </p>
         </div>
-
-        {/* Review */}
-        <h3 style={{ color: 'var(--text-primary)' }} className="font-semibold mb-4">
-          Revisión de respuestas
-        </h3>
+        <h3 style={{ color: 'var(--text-primary)' }} className="font-semibold mb-4">Revisión de respuestas</h3>
         <div className="flex flex-col gap-3 mb-8">
           {answers.map((a, i) => (
             <div key={i}
@@ -448,20 +386,15 @@ export default function QuizPage() {
               <div className="flex items-start gap-3">
                 {a.correct
                   ? <CheckCircle size={18} className="text-emerald-400 shrink-0 mt-0.5" />
-                  : <XCircle size={18} className="text-red-400 shrink-0 mt-0.5" />
-                }
+                  : <XCircle size={18} className="text-red-400 shrink-0 mt-0.5" />}
                 <div className="flex-1">
                   <p style={{ color: 'var(--text-primary)' }} className="text-sm font-medium mb-1">
                     {a.question.question}
                   </p>
                   {!a.correct && (
-                    <p className="text-xs text-red-400 mb-1">
-                      Tu respuesta: {a.selected}
-                    </p>
+                    <p className="text-xs text-red-400 mb-1">Tu respuesta: {a.selected}</p>
                   )}
-                  <p className="text-xs text-emerald-500">
-                    Correcta: {a.question.correctAnswer}
-                  </p>
+                  <p className="text-xs text-emerald-500">Correcta: {a.question.correctAnswer}</p>
                   <p style={{ color: 'var(--text-secondary)' }} className="text-xs mt-1">
                     {a.question.explanation}
                   </p>
@@ -470,7 +403,6 @@ export default function QuizPage() {
             </div>
           ))}
         </div>
-
         <button
           onClick={() => quizResult && exportQuizToPDF(quizResult, answers.map(a => ({
             question: a.question.question,
@@ -486,14 +418,10 @@ export default function QuizPage() {
           <Download size={16} />
           Descargar PDF
         </button>
-
-        {/* Actions */}
-        <button
-          onClick={handleRestart}
+        <button onClick={handleRestart}
           className="w-full flex items-center justify-center gap-2 py-3 rounded-xl
             bg-gradient-to-r from-emerald-500 to-teal-500
-            text-white font-medium text-sm hover:opacity-90 transition-opacity"
-        >
+            text-white font-medium text-sm hover:opacity-90 transition-opacity">
           <RotateCcw size={16} />
           Nuevo examen
         </button>

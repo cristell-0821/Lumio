@@ -3,7 +3,8 @@
 import { useEffect, useRef, useState } from 'react'
 import PageTransition from '@/components/ui/PageTransition'
 import { X } from 'lucide-react'
-import { pomodoroStorage } from '@/lib/storage'
+import { pomodoroDBfunc } from '@/lib/db'
+import { useUser } from '@clerk/nextjs'
 
 const MOTIVATIONAL_PHRASES = [
   '¡Excelente trabajo! Mereces ese descanso. 🌿',
@@ -37,6 +38,9 @@ export default function FocusPage() {
   const minutes = Math.floor(seconds / 60)
   const secs = seconds % 60
 
+  const { user } = useUser()
+  const userId = user?.id || ''
+
   const playSound = () => {
     try {
       const ctx = new AudioContext()
@@ -62,7 +66,7 @@ export default function FocusPage() {
             playSound()
             if (!isBreak) {
               setSessions(s => s + 1)
-              pomodoroStorage.add({ id: crypto.randomUUID(), date: new Date().toISOString() }) 
+              pomodoroDBfunc.add(userId) 
               const randomPhrase = MOTIVATIONAL_PHRASES[Math.floor(Math.random() * MOTIVATIONAL_PHRASES.length)]
               setPhrase(randomPhrase)
               setShowPhrase(true)

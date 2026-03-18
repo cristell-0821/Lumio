@@ -1,10 +1,11 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { taskStorage, projectStorage, pomodoroStorage } from '@/lib/storage'
+import { taskDB, projectDB, pomodoroDBfunc } from '@/lib/db'
 import { Task, Project, PomodoroSession } from '@/types'
 import PageTransition from '@/components/ui/PageTransition'
 import { ChevronLeft, ChevronRight, CalendarDays, LayoutGrid } from 'lucide-react'
+import { useUser } from '@clerk/nextjs'
 
 type ViewMode = 'month' | 'week'
 
@@ -22,43 +23,49 @@ export default function CalendarPage() {
   const [current, setCurrent] = useState(new Date())
   const [events, setEvents] = useState<CalendarEvent[]>([])
   const [selectedDay, setSelectedDay] = useState<string | null>(null)
+  const { user } = useUser()
+  const userId = user?.id || ''
 
   useEffect(() => {
-    const tasks = taskStorage.getAll()
-    const projects = projectStorage.getAll()
-    const sessions = pomodoroStorage.getAll()
+    if (!userId) return
 
-    const taskEvents: CalendarEvent[] = tasks
-      .filter(t => t.deadline)
-      .map(t => ({
-        id: t.id,
-        title: t.title,
-        date: t.deadline,
-        type: 'task',
-        done: t.status === 'listo',
-        priority: t.priority,
+    Promise.all([
+      taskDB.getAll(userId),
+      projectDB.getAll(userId),
+      pomodoroDBfunc.getAll(userId),
+    ]).then(([tasks, projects, sessions]) => {
+      const taskEvents: CalendarEvent[] = tasks
+        .filter(t => t.deadline)
+        .map(t => ({
+          id: t.id,
+          title: t.title,
+          date: t.deadline,
+          type: 'task',
+          done: t.status === 'listo',
+          priority: t.priority,
+        }))
+
+      const projectEvents: CalendarEvent[] = projects
+        .filter(p => p.deadline)
+        .map(p => ({
+          id: p.id,
+          title: p.title,
+          date: p.deadline,
+          type: 'project',
+          done: p.tasks.length > 0 && p.tasks.every(t => t.completed),
+        }))
+
+      const pomodoroEvents: CalendarEvent[] = sessions.map(s => ({
+        id: s.id,
+        title: 'Sesión Pomodoro',
+        date: s.date.split('T')[0],
+        type: 'pomodoro',
+        done: true,
       }))
 
-    const projectEvents: CalendarEvent[] = projects
-      .filter(p => p.deadline)
-      .map(p => ({
-        id: p.id,
-        title: p.title,
-        date: p.deadline,
-        type: 'project',
-        done: p.tasks.length > 0 && p.tasks.every(t => t.completed),
-      }))
-
-    const pomodoroEvents: CalendarEvent[] = sessions.map(s => ({
-      id: s.id,
-      title: 'Sesión Pomodoro',
-      date: s.date.split('T')[0],
-      type: 'pomodoro',
-      done: true,
-    }))
-
-    setEvents([...taskEvents, ...projectEvents, ...pomodoroEvents])
-  }, [])
+      setEvents([...taskEvents, ...projectEvents, ...pomodoroEvents])
+    })
+  }, [userId])
 
   const getEventsForDay = (dateStr: string) =>
     events.filter(e => e.date.split('T')[0] === dateStr)
@@ -85,7 +92,6 @@ export default function CalendarPage() {
   const priorityLabel = (p?: string) =>
     p === 'alta' ? '🔴' : p === 'media' ? '🟡' : p === 'baja' ? '🟢' : ''
 
-  // ===== MONTH VIEW =====
   const renderMonth = () => {
     const year = current.getFullYear()
     const month = current.getMonth()
@@ -93,12 +99,10 @@ export default function CalendarPage() {
     const daysInMonth = new Date(year, month + 1, 0).getDate()
     const today = formatDateStr(new Date())
     const days: (number | null)[] = [...Array(firstDay).fill(null), ...Array.from({ length: daysInMonth }, (_, i) => i + 1)]
-    // Fill to complete last row
     while (days.length % 7 !== 0) days.push(null)
 
     return (
       <div>
-        {/* Weekday headers */}
         <div className="grid grid-cols-7 mb-2">
           {['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'].map(d => (
             <div key={d} className="text-center text-xs font-medium py-2"
@@ -107,8 +111,6 @@ export default function CalendarPage() {
             </div>
           ))}
         </div>
-
-        {/* Days grid */}
         <div className="grid grid-cols-7 gap-1">
           {days.map((day, i) => {
             if (!day) return <div key={i} />
@@ -116,15 +118,12 @@ export default function CalendarPage() {
             const dayEvents = getEventsForDay(dateStr)
             const isToday = dateStr === today
             const isSelected = dateStr === selectedDay
-
             return (
-              <button
-                key={i}
+              <button key={i}
                 onClick={() => setSelectedDay(isSelected ? null : dateStr)}
                 className={`relative min-h-[72px] p-1.5 rounded-xl border text-left transition-all
                   ${isSelected ? 'border-emerald-500/50' : 'border-transparent hover:border-emerald-900/30'}`}
-                style={{ backgroundColor: isSelected ? 'rgba(16,185,129,0.05)' : 'var(--bg-surface)' }}
-              >
+                style={{ backgroundColor: isSelected ? 'rgba(16,185,129,0.05)' : 'var(--bg-surface)' }}>
                 <span className={`text-xs font-medium w-6 h-6 flex items-center justify-center rounded-full mb-1
                   ${isToday ? 'bg-emerald-500 text-white' : ''}`}
                   style={!isToday ? { color: 'var(--text-primary)' } : {}}>
@@ -144,8 +143,6 @@ export default function CalendarPage() {
             )
           })}
         </div>
-
-        {/* Selected day detail */}
         {selectedDay && (
           <div className="mt-4 p-4 rounded-2xl border border-emerald-900/30"
             style={{ backgroundColor: 'var(--bg-surface)' }}>
@@ -172,30 +169,25 @@ export default function CalendarPage() {
     )
   }
 
-  // ===== WEEK VIEW =====
   const renderWeek = () => {
     const startOfWeek = new Date(current)
     const day = startOfWeek.getDay()
     startOfWeek.setDate(startOfWeek.getDate() - day)
     const today = formatDateStr(new Date())
-
     const weekDays = Array.from({ length: 7 }, (_, i) => {
       const d = new Date(startOfWeek)
       d.setDate(startOfWeek.getDate() + i)
       return d
     })
-
     return (
       <div className="flex flex-col gap-2">
         {weekDays.map(d => {
           const dateStr = formatDateStr(d)
           const dayEvents = getEventsForDay(dateStr)
           const isToday = dateStr === today
-
           return (
             <div key={dateStr}
-              className={`p-4 rounded-xl border transition-all
-                ${isToday ? 'border-emerald-500/40' : 'border-emerald-900/20'}`}
+              className={`p-4 rounded-xl border transition-all ${isToday ? 'border-emerald-500/40' : 'border-emerald-900/20'}`}
               style={{ backgroundColor: 'var(--bg-surface)' }}>
               <div className="flex items-center gap-3 mb-2">
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shrink-0
@@ -260,7 +252,6 @@ export default function CalendarPage() {
   return (
     <PageTransition>
       <div className="max-w-3xl mx-auto">
-        {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
             <h2 style={{ color: 'var(--text-primary)' }} className="text-3xl font-bold capitalize">
@@ -271,28 +262,21 @@ export default function CalendarPage() {
             </p>
           </div>
           <div className="flex items-center gap-2">
-            {/* View toggle */}
             <div className="flex rounded-xl border border-emerald-900/30 overflow-hidden"
               style={{ backgroundColor: 'var(--bg-surface)' }}>
-              <button
-                onClick={() => setView('month')}
+              <button onClick={() => setView('month')}
                 className={`p-2 transition-all ${view === 'month' ? 'bg-emerald-500/20 text-emerald-400' : ''}`}
                 style={view !== 'month' ? { color: 'var(--text-secondary)' } : {}}
-                title="Vista mensual"
-              >
+                title="Vista mensual">
                 <LayoutGrid size={16} />
               </button>
-              <button
-                onClick={() => setView('week')}
+              <button onClick={() => setView('week')}
                 className={`p-2 transition-all ${view === 'week' ? 'bg-emerald-500/20 text-emerald-400' : ''}`}
                 style={view !== 'week' ? { color: 'var(--text-secondary)' } : {}}
-                title="Vista semanal"
-              >
+                title="Vista semanal">
                 <CalendarDays size={16} />
               </button>
             </div>
-
-            {/* Nav */}
             <button onClick={handlePrev}
               className="p-2 rounded-xl border border-emerald-900/30 hover:border-emerald-500/30 transition-all"
               style={{ color: 'var(--text-secondary)', backgroundColor: 'var(--bg-surface)' }}>
@@ -311,8 +295,6 @@ export default function CalendarPage() {
             </button>
           </div>
         </div>
-
-        {/* Legend */}
         <div className="flex items-center gap-4 mb-6 flex-wrap">
           {[
             { label: 'Tarea pendiente', color: 'bg-yellow-400' },
@@ -326,8 +308,6 @@ export default function CalendarPage() {
             </div>
           ))}
         </div>
-
-        {/* Calendar */}
         {view === 'month' ? renderMonth() : renderWeek()}
       </div>
     </PageTransition>

@@ -6,6 +6,7 @@ import { LayoutDashboard, CheckSquare, CalendarDays, Users, Timer, Menu, X, Chev
 import ThemeToggle from './ThemeToggle'
 import { useState, useEffect, useRef } from 'react'
 import { useTheme } from 'next-themes'
+import { UserButton, useUser } from '@clerk/nextjs'
 
 const navItems = [
   { href: '/', label: 'Dashboard', icon: LayoutDashboard },
@@ -33,6 +34,7 @@ export default function Sidebar() {
 
   const logoSrc = mounted && theme === 'light' ? '/img/logo_light.png' : '/img/logo.png'
   const isCollapsed = width <= 160
+  const { user } = useUser()
 
   // Resize logic
   useEffect(() => {
@@ -128,6 +130,25 @@ export default function Sidebar() {
             }
           </div>
         </div>
+        {/* User section */}
+        <div className={`p-3 border-t mt-auto ${isCollapsed ? 'flex justify-center' : ''}`}
+          style={{ borderColor: 'var(--border-color)' }}>
+          {isCollapsed ? (
+            <UserButton />
+          ) : (
+            <div className="flex items-center gap-3">
+              <UserButton />
+              <div className="flex-1 min-w-0">
+                <p style={{ color: 'var(--text-primary)' }} className="text-xs font-medium truncate">
+                  {user?.firstName || user?.emailAddresses[0]?.emailAddress}
+                </p>
+                <p style={{ color: 'var(--text-secondary)' }} className="text-xs truncate">
+                  {user?.emailAddresses[0]?.emailAddress}
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
       </aside>
 
       {/* Desktop spacer */}
@@ -141,7 +162,6 @@ export default function Sidebar() {
         border-b border-emerald-900/30
         flex items-center justify-between px-5 py-4"
         style={{ backgroundColor: 'var(--bg-surface)' }}>
-        <img src={logoSrc} alt="Lumio" className="h-8 w-auto" />
         <button
           onClick={() => setMobileOpen(!mobileOpen)}
           className="text-emerald-400 hover:text-emerald-300 transition-colors"
@@ -177,6 +197,20 @@ export default function Sidebar() {
         <div className="flex items-center justify-between pt-6">
           <span style={{ color: 'var(--text-secondary)' }} className="text-xs">v1.0.0</span>
           <ThemeToggle />
+        </div>
+
+        {/* User section móvil */}
+        <div className="flex items-center gap-3 pt-4 mt-2 border-t"
+          style={{ borderColor: 'var(--border-color)' }}>
+          <UserButton />
+          <div className="flex-1 min-w-0">
+            <p style={{ color: 'var(--text-primary)' }} className="text-xs font-medium truncate">
+              {user?.firstName || user?.emailAddresses[0]?.emailAddress}
+            </p>
+            <p style={{ color: 'var(--text-secondary)' }} className="text-xs truncate">
+              {user?.emailAddresses[0]?.emailAddress}
+            </p>
+          </div>
         </div>
       </div>
     </>
