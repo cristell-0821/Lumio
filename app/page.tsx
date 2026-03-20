@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { taskDB, quizDB, projectDB } from '@/lib/db'
 import { Task, QuizResult, Project } from '@/types'
-import { Sparkles, CheckSquare, Brain, Users, ArrowRight, Plus, Timer, ClipboardCheck } from 'lucide-react'
+import { Sparkles, CheckSquare, Brain, Users, ArrowRight, Plus, Timer, ClipboardCheck, LayoutDashboard } from 'lucide-react'
 import Link from 'next/link'
 import PageTransition from '@/components/ui/PageTransition'
 import { useUser } from '@clerk/nextjs'
@@ -151,9 +151,14 @@ export default function Dashboard() {
         )}
 
         {/* Header */}
-        <div className="mb-8">
-          <h2 style={{ color: 'var(--text-primary)' }} className="text-3xl font-bold">Dashboard</h2>
-          <p style={{ color: 'var(--text-secondary)' }} className="mt-1 text-sm">Resumen de tu actividad académica</p>
+        <div className="flex items-center gap-4 mb-8">
+          <div className="w-11 h-11 rounded-2xl bg-emerald-500/15 flex items-center justify-center shrink-0">
+            <LayoutDashboard size={20} className="text-emerald-400" />
+          </div>
+          <div>
+            <h2 style={{ color: 'var(--text-primary)' }} className="text-3xl font-bold">Dashboard</h2>
+            <p style={{ color: 'var(--text-secondary)' }} className="text-sm mt-0.5">Resumen de tu actividad académica</p>
+          </div>
         </div>
 
         {/* Stats Cards */}
