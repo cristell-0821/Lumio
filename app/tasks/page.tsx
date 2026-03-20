@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { DragDropContext, DropResult } from '@hello-pangea/dnd'
 import { Task, TaskStatus, Priority } from '@/types'
 import TaskColumn from '@/components/tasks/TaskColumn'
-import { Plus, X } from 'lucide-react'
+import { Plus, X, CheckSquare, ChevronDown } from 'lucide-react'
 import PageTransition from '@/components/ui/PageTransition'
 import Toast from '@/components/ui/Toast'
 import { useToast } from '@/lib/useToast'
@@ -44,11 +44,8 @@ export default function TasksPage() {
     const { destination, source, draggableId } = result
     if (!destination) return
     if (destination.droppableId === source.droppableId) return
-
     const newStatus = destination.droppableId as TaskStatus
-    const updated = tasks.map(t =>
-      t.id === draggableId ? { ...t, status: newStatus } : t
-    )
+    const updated = tasks.map(t => t.id === draggableId ? { ...t, status: newStatus } : t)
     setTasks(updated)
     await taskDB.update(draggableId, { status: newStatus })
     showToast('Tarea movida.')
@@ -56,12 +53,7 @@ export default function TasksPage() {
 
   const handleEdit = (task: Task) => {
     setEditingTask(task)
-    setForm({
-      title: task.title,
-      subject: task.subject,
-      deadline: task.deadline,
-      priority: task.priority,
-    })
+    setForm({ title: task.title, subject: task.subject, deadline: task.deadline, priority: task.priority })
     setShowForm(true)
   }
 
@@ -70,7 +62,6 @@ export default function TasksPage() {
       setFormError('Por favor completa todos los campos.')
       return
     }
-
     const today = new Date()
     today.setHours(0, 0, 0, 0)
     const selected = new Date(form.deadline + 'T00:00:00')
@@ -78,34 +69,24 @@ export default function TasksPage() {
       setFormError('La fecha no puede ser anterior a hoy.')
       return
     }
-
     setFormError('')
 
     if (editingTask) {
-      const updates = {
-        title: form.title,
-        subject: form.subject,
-        deadline: form.deadline,
-        priority: form.priority,
-      }
+      const updates = { title: form.title, subject: form.subject, deadline: form.deadline, priority: form.priority }
       await taskDB.update(editingTask.id, updates)
       setTasks(tasks.map(t => t.id === editingTask.id ? { ...t, ...updates } : t))
       showToast('¡Tarea actualizada!')
       setEditingTask(null)
     } else {
       const newTask = await taskDB.add(userId, {
-        title: form.title,
-        subject: form.subject,
-        deadline: form.deadline,
-        priority: form.priority,
-        status: 'pendiente',
+        title: form.title, subject: form.subject, deadline: form.deadline,
+        priority: form.priority, status: 'pendiente',
       })
       if (newTask) {
         setTasks([...tasks, newTask])
         showToast('¡Tarea creada exitosamente!')
       }
     }
-
     setForm({ title: '', subject: '', deadline: '', priority: 'media' })
     setShowForm(false)
   }
@@ -117,6 +98,8 @@ export default function TasksPage() {
   }
 
   const subjects = [...new Set(tasks.map(t => t.subject))].filter(Boolean)
+  const pendingCount = tasks.filter(t => t.status !== 'listo').length
+  const doneCount = tasks.filter(t => t.status === 'listo').length
 
   const filteredTasks = tasks.filter(t => {
     const matchPriority = filterPriority === 'todas' || t.priority === filterPriority
@@ -126,18 +109,26 @@ export default function TasksPage() {
 
   return (
     <PageTransition>
-      <div className="max-w-6xl mx-auto">
+      <div className="max-w-4xl mx-auto">
+
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
-          <div>
-            <h2 style={{ color: 'var(--text-primary)' }} className="text-3xl font-bold">Tareas</h2>
-            <p style={{ color: 'var(--text-secondary)' }} className="mt-1">Organiza tu carga académica</p>
+          <div className="flex items-center gap-4">
+            <div className="w-11 h-11 rounded-2xl bg-emerald-500/15 flex items-center justify-center shrink-0">
+              <CheckSquare size={20} className="text-emerald-400" />
+            </div>
+            <div>
+              <h2 style={{ color: 'var(--text-primary)' }} className="text-3xl font-bold">Tareas</h2>
+              <p style={{ color: 'var(--text-secondary)' }} className="text-sm mt-0.5">
+                {pendingCount} pendientes · {doneCount} completadas
+              </p>
+            </div>
           </div>
           <button
             onClick={() => setShowForm(!showForm)}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl
               bg-gradient-to-r from-emerald-500 to-teal-500
-              text-white font-medium text-sm hover:opacity-90 transition-opacity"
+              text-white font-medium text-sm hover:opacity-90 transition-opacity shadow-lg shadow-emerald-500/20"
           >
             <Plus size={16} />
             Nueva tarea
@@ -148,26 +139,25 @@ export default function TasksPage() {
         {showForm && (
           <div className="mb-8 p-6 rounded-2xl border border-emerald-900/30"
             style={{ backgroundColor: 'var(--bg-surface)' }}>
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between mb-5">
               <h3 style={{ color: 'var(--text-primary)' }} className="font-semibold">
                 {editingTask ? 'Editar tarea' : 'Nueva tarea'}
               </h3>
-              <button onClick={() => {
-                setShowForm(false)
-                setEditingTask(null)
-                setForm({ title: '', subject: '', deadline: '', priority: 'media' })
-                setFormError('')
-              }}>
+              <button
+                onClick={() => { setShowForm(false); setEditingTask(null); setForm({ title: '', subject: '', deadline: '', priority: 'media' }); setFormError('') }}
+                style={{ color: 'var(--text-secondary)' }}
+                className="hover:text-red-400 transition-colors"
+              >
                 <X size={18} />
               </button>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <input
                 placeholder="Título de la tarea"
                 value={form.title}
                 onChange={e => { setForm({ ...form, title: e.target.value }); setFormError('') }}
                 className="px-4 py-2.5 rounded-xl border border-emerald-900/30
-                  text-sm focus:outline-none focus:border-emerald-500/50"
+                  text-sm focus:outline-none focus:border-emerald-500/50 transition-colors"
                 style={{ backgroundColor: 'var(--bg-main)', color: 'var(--text-primary)' }}
               />
               <input
@@ -175,7 +165,7 @@ export default function TasksPage() {
                 value={form.subject}
                 onChange={e => { setForm({ ...form, subject: e.target.value }); setFormError('') }}
                 className="px-4 py-2.5 rounded-xl border border-emerald-900/30
-                  text-sm focus:outline-none focus:border-emerald-500/50"
+                  text-sm focus:outline-none focus:border-emerald-500/50 transition-colors"
                 style={{ backgroundColor: 'var(--bg-main)', color: 'var(--text-primary)' }}
               />
               <input
@@ -184,19 +174,19 @@ export default function TasksPage() {
                 min={new Date().toISOString().split('T')[0]}
                 onChange={e => { setForm({ ...form, deadline: e.target.value }); setFormError('') }}
                 className="px-4 py-2.5 rounded-xl border border-emerald-900/30
-                  text-sm focus:outline-none focus:border-emerald-500/50"
+                  text-sm focus:outline-none focus:border-emerald-500/50 transition-colors"
                 style={{ backgroundColor: 'var(--bg-main)', color: 'var(--text-primary)' }}
               />
               <select
                 value={form.priority}
                 onChange={e => setForm({ ...form, priority: e.target.value as Priority })}
                 className="px-4 py-2.5 rounded-xl border border-emerald-900/30
-                  text-sm focus:outline-none focus:border-emerald-500/50"
+                  text-sm focus:outline-none focus:border-emerald-500/50 transition-colors"
                 style={{ backgroundColor: 'var(--bg-main)', color: 'var(--text-primary)' }}
               >
-                <option value="alta">Alta prioridad</option>
-                <option value="media">Media prioridad</option>
-                <option value="baja">Baja prioridad</option>
+                <option value="alta">🔴 Alta prioridad</option>
+                <option value="media">🟡 Media prioridad</option>
+                <option value="baja">🟢 Baja prioridad</option>
               </select>
             </div>
             {formError && (
@@ -204,20 +194,30 @@ export default function TasksPage() {
                 <span>⚠</span> {formError}
               </p>
             )}
-            <button
-              onClick={handleAdd}
-              className="mt-4 px-6 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500
-                to-teal-500 text-white font-medium text-sm hover:opacity-90 transition-opacity"
-            >
-              {editingTask ? 'Guardar cambios' : 'Agregar tarea'}
-            </button>
+            <div className="flex gap-3 mt-4">
+              <button
+                onClick={handleAdd}
+                className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500
+                  to-teal-500 text-white font-medium text-sm hover:opacity-90 transition-opacity"
+              >
+                {editingTask ? 'Guardar cambios' : 'Agregar tarea'}
+              </button>
+              <button
+                onClick={() => { setShowForm(false); setEditingTask(null); setForm({ title: '', subject: '', deadline: '', priority: 'media' }); setFormError('') }}
+                className="px-6 py-2.5 rounded-xl border border-emerald-900/30 text-sm font-medium
+                  hover:border-emerald-500/30 transition-colors"
+                style={{ color: 'var(--text-secondary)' }}
+              >
+                Cancelar
+              </button>
+            </div>
           </div>
         )}
 
         {/* Filtros */}
         <div className="flex items-center gap-3 mb-6 flex-wrap">
-          <span style={{ color: 'var(--text-secondary)' }} className="text-xs font-medium">
-            Filtrar por:
+          <span style={{ color: 'var(--text-secondary)' }} className="text-xs font-medium uppercase tracking-wide">
+            Prioridad:
           </span>
           {(['todas', 'alta', 'media', 'baja'] as const).map(p => (
             <button
@@ -230,24 +230,46 @@ export default function TasksPage() {
                 }`}
               style={filterPriority !== p ? { color: 'var(--text-secondary)' } : {}}
             >
-              {p.charAt(0).toUpperCase() + p.slice(1)}
+              {p === 'alta' ? '🔴' : p === 'media' ? '🟡' : p === 'baja' ? '🟢' : ''} {p.charAt(0).toUpperCase() + p.slice(1)}
             </button>
           ))}
-          {subjects.length > 0 && <div className="h-4 w-px bg-emerald-900/40" />}
-          {subjects.map(subject => (
-            <button
-              key={subject}
-              onClick={() => setFilterSubject(filterSubject === subject ? '' : subject)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all
-                ${filterSubject === subject
-                  ? 'bg-teal-500/20 text-teal-400 border border-teal-500/30'
-                  : 'border border-transparent hover:bg-teal-500/10'
-                }`}
-              style={filterSubject !== subject ? { color: 'var(--text-secondary)' } : {}}
-            >
-              {subject}
-            </button>
-          ))}
+
+          {/* Combobox materias */}
+          {subjects.length > 0 && (
+            <>
+              <div className="h-4 w-px bg-emerald-900/40" />
+              <span style={{ color: 'var(--text-secondary)' }} className="text-xs font-medium uppercase tracking-wide">
+                Materia:
+              </span>
+              <div className="relative">
+                <select
+                  value={filterSubject}
+                  onChange={e => setFilterSubject(e.target.value)}
+                  className={`pl-3 pr-8 py-1.5 rounded-lg text-xs font-medium appearance-none
+                    border transition-all cursor-pointer focus:outline-none
+                    ${filterSubject
+                      ? 'bg-teal-500/20 text-teal-400 border-teal-500/30'
+                      : 'border-transparent hover:bg-emerald-500/10'
+                    }`}
+                  style={{
+                    backgroundColor: filterSubject ? undefined : 'var(--bg-surface)',
+                    color: filterSubject ? undefined : 'var(--text-secondary)',
+                  }}
+                >
+                  <option value="" style={{ backgroundColor: 'var(--bg-surface)', color: 'var(--text-primary)' }}>
+                    Todas las materias
+                  </option>
+                  {subjects.map(s => (
+                    <option key={s} value={s} style={{ backgroundColor: 'var(--bg-surface)', color: 'var(--text-primary)' }}>
+                      {s}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown size={12} className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-emerald-600" />
+              </div>
+            </>
+          )}
+
           {(filterPriority !== 'todas' || filterSubject) && (
             <button
               onClick={() => { setFilterPriority('todas'); setFilterSubject('') }}
@@ -260,7 +282,7 @@ export default function TasksPage() {
 
         {/* Kanban */}
         <DragDropContext onDragEnd={handleDragEnd}>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             {loading ? (
               COLUMNS.map(status => (
                 <div key={status} className="p-4 rounded-2xl border border-emerald-900/20"

@@ -5,7 +5,7 @@ import { Project } from '@/types'
 import { projectDB } from '@/lib/db'
 import ProjectCard from '@/components/projects/ProjectCard'
 import ProjectDetail from '@/components/projects/ProjectDetail'
-import { Plus, X } from 'lucide-react'
+import { Plus, X, Users, FolderOpen } from 'lucide-react'
 import PageTransition from '@/components/ui/PageTransition'
 import Toast from '@/components/ui/Toast'
 import { useToast } from '@/lib/useToast'
@@ -54,11 +54,8 @@ export default function ProjectsPage() {
       setEditingProject(null)
     } else {
       const newProject = await projectDB.add(userId, {
-        title: form.title,
-        description: form.description,
-        deadline: form.deadline,
-        members: [],
-        tasks: [],
+        title: form.title, description: form.description,
+        deadline: form.deadline, members: [], tasks: [],
       })
       if (newProject) {
         setProjects([...projects, newProject])
@@ -71,11 +68,8 @@ export default function ProjectsPage() {
 
   const handleUpdate = async (updated: Project) => {
     await projectDB.update(updated.id, {
-      title: updated.title,
-      description: updated.description,
-      deadline: updated.deadline,
-      members: updated.members,
-      tasks: updated.tasks,
+      title: updated.title, description: updated.description,
+      deadline: updated.deadline, members: updated.members, tasks: updated.tasks,
     })
     setProjects(projects.map(p => p.id === updated.id ? updated : p))
     setActiveProject(updated)
@@ -93,6 +87,9 @@ export default function ProjectsPage() {
     setShowForm(true)
   }
 
+  const activeCount = projects.filter(p => p.tasks.some(t => !t.completed)).length
+  const completedCount = projects.filter(p => p.tasks.length > 0 && p.tasks.every(t => t.completed)).length
+
   if (activeProject) {
     return (
       <ProjectDetail
@@ -106,40 +103,54 @@ export default function ProjectsPage() {
   return (
     <PageTransition>
       <div className="max-w-4xl mx-auto">
+
+        {/* Header */}
         <div className="flex items-center justify-between mb-8">
-          <div>
-            <h2 style={{ color: 'var(--text-primary)' }} className="text-3xl font-bold">Proyectos</h2>
-            <p style={{ color: 'var(--text-secondary)' }} className="mt-1">Gestiona tus proyectos grupales</p>
+          <div className="flex items-center gap-4">
+            <div className="w-11 h-11 rounded-2xl bg-teal-500/15 flex items-center justify-center shrink-0">
+              <Users size={20} className="text-teal-400" />
+            </div>
+            <div>
+              <h2 style={{ color: 'var(--text-primary)' }} className="text-3xl font-bold">Proyectos</h2>
+              <p style={{ color: 'var(--text-secondary)' }} className="text-sm mt-0.5">
+                {activeCount} activos · {completedCount} completados
+              </p>
+            </div>
           </div>
           <button
             onClick={() => setShowForm(!showForm)}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl
               bg-gradient-to-r from-emerald-500 to-teal-500
-              text-white font-medium text-sm hover:opacity-90 transition-opacity"
+              text-white font-medium text-sm hover:opacity-90 transition-opacity shadow-lg shadow-emerald-500/20"
           >
             <Plus size={16} />
             Nuevo proyecto
           </button>
         </div>
 
+        {/* Form */}
         {showForm && (
           <div className="mb-8 p-6 rounded-2xl border border-emerald-900/30"
             style={{ backgroundColor: 'var(--bg-surface)' }}>
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between mb-5">
               <h3 style={{ color: 'var(--text-primary)' }} className="font-semibold">
                 {editingProject ? 'Editar proyecto' : 'Nuevo proyecto'}
               </h3>
-              <button onClick={() => { setShowForm(false); setEditingProject(null); setForm({ title: '', description: '', deadline: '' }) }}>
+              <button
+                onClick={() => { setShowForm(false); setEditingProject(null); setForm({ title: '', description: '', deadline: '' }) }}
+                style={{ color: 'var(--text-secondary)' }}
+                className="hover:text-red-400 transition-colors"
+              >
                 <X size={18} />
               </button>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <input
                 placeholder="Nombre del proyecto"
                 value={form.title}
                 onChange={e => { setForm({ ...form, title: e.target.value }); setFormError('') }}
                 className="px-4 py-2.5 rounded-xl border border-emerald-900/30
-                  text-sm focus:outline-none focus:border-emerald-500/50"
+                  text-sm focus:outline-none focus:border-emerald-500/50 transition-colors"
                 style={{ backgroundColor: 'var(--bg-main)', color: 'var(--text-primary)' }}
               />
               <input
@@ -148,7 +159,7 @@ export default function ProjectsPage() {
                 min={new Date().toISOString().split('T')[0]}
                 onChange={e => { setForm({ ...form, deadline: e.target.value }); setFormError('') }}
                 className="px-4 py-2.5 rounded-xl border border-emerald-900/30
-                  text-sm focus:outline-none focus:border-emerald-500/50"
+                  text-sm focus:outline-none focus:border-emerald-500/50 transition-colors"
                 style={{ backgroundColor: 'var(--bg-main)', color: 'var(--text-primary)' }}
               />
               <textarea
@@ -157,7 +168,7 @@ export default function ProjectsPage() {
                 onChange={e => setForm({ ...form, description: e.target.value })}
                 rows={3}
                 className="md:col-span-2 px-4 py-2.5 rounded-xl border border-emerald-900/30
-                  text-sm resize-none focus:outline-none focus:border-emerald-500/50"
+                  text-sm resize-none focus:outline-none focus:border-emerald-500/50 transition-colors"
                 style={{ backgroundColor: 'var(--bg-main)', color: 'var(--text-primary)' }}
               />
             </div>
@@ -166,27 +177,54 @@ export default function ProjectsPage() {
                 <span>⚠</span> {formError}
               </p>
             )}
-            <button
-              onClick={handleAdd}
-              className="mt-4 px-6 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500
-                to-teal-500 text-white font-medium text-sm hover:opacity-90 transition-opacity"
-            >
-              {editingProject ? 'Guardar cambios' : 'Crear proyecto'}
-            </button>
+            <div className="flex gap-3 mt-4">
+              <button
+                onClick={handleAdd}
+                className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500
+                  to-teal-500 text-white font-medium text-sm hover:opacity-90 transition-opacity"
+              >
+                {editingProject ? 'Guardar cambios' : 'Crear proyecto'}
+              </button>
+              <button
+                onClick={() => { setShowForm(false); setEditingProject(null); setForm({ title: '', description: '', deadline: '' }) }}
+                className="px-6 py-2.5 rounded-xl border border-emerald-900/30 text-sm font-medium
+                  hover:border-emerald-500/30 transition-colors"
+                style={{ color: 'var(--text-secondary)' }}
+              >
+                Cancelar
+              </button>
+            </div>
           </div>
         )}
 
+        {/* Content */}
         {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             {Array.from({ length: 4 }).map((_, i) => <SkeletonProject key={i} />)}
           </div>
         ) : projects.length === 0 ? (
-          <div className="text-center py-16 text-emerald-800">
-            <p>No tienes proyectos aún.</p>
-            <p className="text-xs mt-1">Crea tu primer proyecto arriba 👆</p>
+          <div className="flex flex-col items-center justify-center py-20 text-center">
+            <div className="w-16 h-16 rounded-2xl bg-teal-500/10 flex items-center justify-center mb-4">
+              <FolderOpen size={28} className="text-teal-500/50" />
+            </div>
+            <p style={{ color: 'var(--text-primary)' }} className="font-medium mb-1">
+              No tienes proyectos aún
+            </p>
+            <p style={{ color: 'var(--text-secondary)' }} className="text-sm mb-6">
+              Crea tu primer proyecto grupal y empieza a colaborar
+            </p>
+            <button
+              onClick={() => setShowForm(true)}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl
+                bg-gradient-to-r from-emerald-500 to-teal-500
+                text-white font-medium text-sm hover:opacity-90 transition-opacity"
+            >
+              <Plus size={15} />
+              Crear primer proyecto
+            </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             {projects.map(project => (
               <ProjectCard
                 key={project.id}
